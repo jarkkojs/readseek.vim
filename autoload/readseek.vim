@@ -37,6 +37,7 @@ enddef
 
 export def Definition()
   var project_root = root.Find()
+  Status('finding definition...')
   Identify((identify_result: dict<any>) => {
     if !identify_result.ok
       Error(get(identify_result, 'error', 'readseek identify failed'))
@@ -67,6 +68,7 @@ export def References()
     endif
 
     var project_root = root.Find()
+    Status($'finding references for {identifier_text}...')
     job.Run(['references', '--compact', project_root, identifier_text], '', (references_result: dict<any>) => {
       if !references_result.ok
         Error(get(references_result, 'error', 'readseek references failed'))
@@ -79,6 +81,7 @@ export def References()
         return
       endif
 
+      Status($'{len(locations)} {Plural(len(locations), 'reference')} found for {identifier_text}')
       for location in locations
         location.file = ResolveLocationFile(get(location, 'file', ''), project_root)
       endfor
@@ -106,6 +109,7 @@ export def Rename()
     endif
 
     var project_root = root.Find()
+    Status($'finding references for {old_name}...')
     job.Run(['references', '--compact', project_root, old_name], '', (references_result: dict<any>) => {
       if !references_result.ok
         Error(get(references_result, 'error', 'readseek references failed'))
@@ -118,6 +122,7 @@ export def Rename()
         return
       endif
 
+      Status($'{len(locations)} {Plural(len(locations), 'reference')} found for {old_name}')
       ApplyRename(locations, old_name, new_name, project_root)
     })
   })
@@ -142,10 +147,12 @@ def HandleDefinitionLocations(locations: list<any>, project_root: string)
   endif
 
   if len(locations) == 1
+    Status('1 definition found')
     OpenLocation(locations[0], project_root)
     return
   endif
 
+  Status($'{len(locations)} definitions found')
   for location in locations
     location.file = ResolveLocationFile(get(location, 'file', ''), project_root)
   endfor
@@ -270,20 +277,23 @@ def ResolveLocationFile(file: string, project_root: string): string
   return fnamemodify(project_root .. '/' .. substitute(file, '^\./', '', ''), ':p')
 enddef
 
-def HoverLines(identify: dict<any>): list<string>
+export def HoverLines(identify: dict<any>): list<string>
   var lines: list<string> = []
   var identifier = get(identify, 'identifier', v:null)
   if type(identifier) == v:t_dict && has_key(identifier, 'text')
-    add(lines, $'Identifier: {identifier.text}')
+    add(lines, $'identifier: {identifier.text}')
   endif
 
   var symbol = get(identify, 'symbol', v:null)
   if type(symbol) == v:t_dict && has_key(symbol, 'name')
-    add(lines, $'Symbol: {symbol.name}')
+    add(lines, $'symbol: {symbol.name}')
+    if has_key(symbol, 'kind')
+      add(lines, $'kind: {symbol.kind}')
+    endif
   endif
 
   if has_key(identify, 'file') && has_key(identify, 'line') && has_key(identify, 'column')
-    add(lines, $'{identify.file}:{identify.line}:{identify.column}')
+    add(lines, $'location: {identify.file}:{identify.line}:{identify.column}')
   endif
 
   return lines
@@ -297,6 +307,7 @@ def ShowHover(lines: list<string>)
       col: 'cursor',
       padding: [0, 1, 0, 1],
       border: [],
+      title: ' readseek ',
       moved: 'any',
     })
     return
@@ -309,4 +320,14 @@ def Error(message: string)
   echohl ErrorMsg
   echomsg message
   echohl None
+enddef
+
+def Status(message: string)
+  echohl ModeMsg
+  echomsg 'readseek.vim: ' .. message
+  echohl None
+enddef
+
+def Plural(count: number, word: string): string
+  return count == 1 ? word : word .. 's'
 enddef
