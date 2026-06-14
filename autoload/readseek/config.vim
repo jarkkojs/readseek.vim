@@ -66,7 +66,7 @@ export def CheckHealth(): dict<any>
 
   var path = ExecutablePath()
   CacheHealth(version)
-  return {ok: true, message: $'readseek.vim: readseek {version} found at {path}'
+  return {ok: true, message: $'readseek.vim: readseek {version} found at {path}'}
 enddef
 
 def VersionParts(version: string): list<number>

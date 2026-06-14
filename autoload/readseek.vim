@@ -36,18 +36,19 @@ export def Hover()
 enddef
 
 export def Definition()
+  var project_root = root.Find()
   Identify((identify_result: dict<any>) => {
     if !identify_result.ok
       Error(get(identify_result, 'error', 'readseek identify failed'))
       return
     endif
 
-    job.Run(['definition', '--stdin', '--compact', root.Find()], identify_result.stdout, (definition_result: dict<any>) => {
+    job.Run(['definition', '--stdin', '--compact', project_root], identify_result.stdout, (definition_result: dict<any>) => {
       if !definition_result.ok
         Error(get(definition_result, 'error', 'readseek definition failed'))
         return
       endif
-      HandleDefinitionLocations(get(definition_result.json, 'locations', []))
+      HandleDefinitionLocations(get(definition_result.json, 'locations', []), project_root)
     })
   })
 enddef
@@ -134,26 +135,25 @@ def IdentifierText(identify: dict<any>): string
   return identifier.text
 enddef
 
-def HandleDefinitionLocations(locations: list<any>)
+def HandleDefinitionLocations(locations: list<any>, project_root: string)
   if empty(locations)
     echo 'readseek.vim: no definitions found'
     return
   endif
 
   if len(locations) == 1
-    OpenLocation(locations[0])
+    OpenLocation(locations[0], project_root)
     return
   endif
 
-  var project_root = root.Find()
   for location in locations
     location.file = ResolveLocationFile(get(location, 'file', ''), project_root)
   endfor
   quickfix.SetLocations(locations, 'readseek definitions')
 enddef
 
-def OpenLocation(location: dict<any>)
-  var file = ResolveLocationFile(get(location, 'file', ''), root.Find())
+def OpenLocation(location: dict<any>, project_root: string)
+  var file = ResolveLocationFile(get(location, 'file', ''), project_root)
   if empty(file)
     Error('readseek.vim: definition result has no file')
     return
@@ -264,10 +264,6 @@ def ResolveLocationFile(file: string, project_root: string): string
   endif
 
   if file =~# '^/'
-    return fnamemodify(file, ':p')
-  endif
-
-  if filereadable(file)
     return fnamemodify(file, ':p')
   endif
 
