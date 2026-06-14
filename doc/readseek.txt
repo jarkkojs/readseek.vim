@@ -1,0 +1,93 @@
+*readseek.txt*  Vim frontend for readseek
+
+readseek.vim                                                  *readseek.vim*
+
+Vim9 plugin frontend for the readseek CLI.
+
+Requirements~
+  readseek 0.2.5 or newer
+  Vim with +job support
+
+Commands~
+                                                        *:ReadseekCheckHealth*
+  :ReadseekCheckHealth
+        Check that |g:readseek_executable| can be found and that its version is
+        supported. Successful checks are cached for the Vim session.
+
+                                                        *:ReadseekHover*
+  :ReadseekHover
+        Run readseek identify for the current buffer and cursor position. The
+        current buffer is sent through stdin, so unsaved changes are included.
+        Shows identifier context in a popup window when available, otherwise by
+        echoing a one-line message.
+
+                                                        *:ReadseekDefinition*
+  :ReadseekDefinition
+        Identify the symbol at the cursor, pipe the identify JSON to readseek
+        definition, and jump to the result. A single result is opened directly;
+        multiple results are loaded into the configured results list and opened.
+
+                                                        *:ReadseekReferences*
+  :ReadseekReferences
+        Identify the word at the cursor and run readseek references --compact
+        for the current project root. Results are loaded into the configured
+        results list and opened.
+
+                                                        *:ReadseekRename*
+  :ReadseekRename
+        Identify the word at the cursor, prompt for a new name, run readseek
+        references --compact for the current project root, and rewrite each
+        matching file location. Modified buffers are refused to avoid losing
+        unsaved changes.
+
+Options~
+                                                        *g:readseek_executable*
+  g:readseek_executable
+        readseek executable path. Default: 'readseek'
+
+Plug mappings are provided for users to bind to preferred keys:
+          <Plug>(ReadseekDefinition)    :ReadseekDefinition
+          <Plug>(ReadseekReferences)    :ReadseekReferences
+          <Plug>(ReadseekHover)         :ReadseekHover
+          <Plug>(ReadseekRename)        :ReadseekRename
+
+                                                        *g:readseek_root_markers*
+  g:readseek_root_markers
+        List of root marker files or directories. The nearest parent directory
+        containing a marker is used as the readseek project root. Default:
+        ['.git']
+
+                                                        *g:readseek_list_type*
+  g:readseek_list_type
+        Result list type for multiple definitions and references. Use
+        'quickfix' for |setqflist()| and |:copen| or 'location' for
+        |setloclist()| and |:lopen|. Default: 'quickfix'
+
+Examples~
+>
+  let g:readseek_executable = '/usr/local/bin/readseek'
+  let g:readseek_root_markers = ['.git', 'package.json']
+  let g:readseek_list_type = 'location'
+
+  nnoremap <silent> gd <Plug>(ReadseekDefinition)
+  nnoremap <silent> gr <Plug>(ReadseekReferences)
+  nnoremap <silent> K <Plug>(ReadseekHover)
+  nnoremap <silent> ,rn <Plug>(ReadseekRename)
+<
+
+Troubleshooting~
+  Run :ReadseekCheckHealth first when commands fail. It reports missing
+  executables and unsupported readseek versions.
+
+  If no definition or references are found, confirm the cursor is on an
+  identifier that readseek can recognize and that the project root selected by
+  |g:readseek_root_markers| includes the files to search.
+
+  Results use compact readseek locations: file, line, column, and text. With
+  quickfix output, use |:cnext|, |:cprev|, and |:cclose|. With location-list
+  output, use |:lnext|, |:lprev|, and |:lclose|.
+
+  Rename depends on fresh readseek reference locations. If a rename reports a
+  stale location, save or reload changed files and retry.
+
+vim:tw=78:ts=8:noet:ft=help:norl:
