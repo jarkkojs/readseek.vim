@@ -65,7 +65,8 @@ export def References()
       return
     endif
 
-    job.Run(['references', '--compact', root.Find(), identifier_text], '', (references_result: dict<any>) => {
+    var project_root = root.Find()
+    job.Run(['references', '--compact', project_root, identifier_text], '', (references_result: dict<any>) => {
       if !references_result.ok
         Error(get(references_result, 'error', 'readseek references failed'))
         return
@@ -76,6 +77,10 @@ export def References()
         echo $'readseek.vim: no references found for {identifier_text}'
         return
       endif
+
+      for location in locations
+        location.file = ResolveLocationFile(get(location, 'file', ''), project_root)
+      endfor
       quickfix.SetLocations(locations, $'readseek references: {identifier_text}')
     })
   })
@@ -140,11 +145,15 @@ def HandleDefinitionLocations(locations: list<any>)
     return
   endif
 
+  var project_root = root.Find()
+  for location in locations
+    location.file = ResolveLocationFile(get(location, 'file', ''), project_root)
+  endfor
   quickfix.SetLocations(locations, 'readseek definitions')
 enddef
 
 def OpenLocation(location: dict<any>)
-  var file = get(location, 'file', '')
+  var file = ResolveLocationFile(get(location, 'file', ''), root.Find())
   if empty(file)
     Error('readseek.vim: definition result has no file')
     return
