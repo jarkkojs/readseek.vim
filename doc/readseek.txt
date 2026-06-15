@@ -25,19 +25,19 @@ Commands~
                                                         *:ReadseekDefinition*
   :ReadseekDefinition
         Identify the symbol at the cursor, pipe the identify JSON to readseek
-        definition, and jump to the result. A single result is opened directly;
+        def --stdin, and jump to the result. A single result is opened directly;
         multiple results are loaded into the configured results list and opened.
 
                                                         *:ReadseekReferences*
   :ReadseekReferences
-        Identify the word at the cursor and run readseek references --compact
+        Identify the word at the cursor and run readseek refs --format plain
         for the current project root. Results are loaded into the configured
         results list and opened.
 
                                                         *:ReadseekRename*
   :ReadseekRename
         Identify the word at the cursor, prompt for a new name, run readseek
-        references --compact for the current project root, and rewrite each
+        refs --format plain for the current project root, and rewrite each
         matching file location. Modified buffers are refused to avoid losing
         unsaved changes.
 

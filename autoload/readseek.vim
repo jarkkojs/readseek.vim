@@ -88,7 +88,7 @@ export def Definition()
       return
     endif
 
-    job.Run(['definition', '--stdin', '--compact', project_root], identify_result.stdout, (definition_result: dict<any>) => {
+    job.Run(['def', '--stdin', '--format', 'plain', project_root], identify_result.stdout, (definition_result: dict<any>) => {
       if !definition_result.ok
         Notify(get(definition_result, 'error', 'readseek definition failed'), 'error')
         return
@@ -113,7 +113,7 @@ export def References()
 
     var project_root = root.Find()
     Status($'finding references for {identifier_text}...')
-    job.Run(['references', '--compact', project_root, identifier_text], '', (references_result: dict<any>) => {
+    job.Run(['refs', '--format', 'plain', project_root, identifier_text], '', (references_result: dict<any>) => {
       if !references_result.ok
         Notify(get(references_result, 'error', 'readseek references failed'), 'error')
         return
@@ -154,7 +154,7 @@ export def Rename()
 
     var project_root = root.Find()
     Status($'finding references for {old_name}...')
-    job.Run(['references', '--compact', project_root, old_name], '', (references_result: dict<any>) => {
+    job.Run(['refs', '--format', 'plain', project_root, old_name], '', (references_result: dict<any>) => {
       if !references_result.ok
         Notify(get(references_result, 'error', 'readseek references failed'), 'error')
         return
