@@ -51,6 +51,7 @@ Available `<Plug>` mappings:
 | `<Plug>(ReadseekReferences)` | `:ReadseekReferences`  |
 | `<Plug>(ReadseekRename)`     | `:ReadseekRename`      |
 | `<Plug>(ReadseekHover)`      | `:ReadseekHover`       |
+| `<Plug>(ReadseekSearch)`     | `:ReadseekSearch`      |
 
 Define your preferred keys in vimrc:
 
@@ -59,6 +60,7 @@ nnoremap <silent> gd <Plug>(ReadseekDefinition)
 nnoremap <silent> gr <Plug>(ReadseekReferences)
 nnoremap <silent> K <Plug>(ReadseekHover)
 nnoremap <silent> ,rn <Plug>(ReadseekRename)
+nnoremap <silent> ,rs <Plug>(ReadseekSearch)
 ```
 
 ## Commands

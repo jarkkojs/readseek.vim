@@ -69,10 +69,12 @@ def TestMappings()
   var gr = maparg('<Plug>(ReadseekReferences)', 'n', false, true)
   var hover = maparg('<Plug>(ReadseekHover)', 'n', false, true)
   var rn = maparg('<Plug>(ReadseekRename)', 'n', false, true)
+  var search = maparg('<Plug>(ReadseekSearch)', 'n', false, true)
   Check('definition plug mapping', !empty(gd) && gd.rhs ==# '<ScriptCmd>ReadseekDefinition<CR>')
   Check('references plug mapping', !empty(gr) && gr.rhs ==# '<ScriptCmd>ReadseekReferences<CR>')
   Check('hover plug mapping preserved', !empty(hover) && hover.rhs ==# ":echo 'keep'<CR>")
   Check('rename plug mapping', !empty(rn) && rn.rhs ==# '<ScriptCmd>ReadseekRename<CR>')
+  Check('search plug mapping', !empty(search) && search.rhs ==# '<ScriptCmd>ReadseekSearch<CR>')
 enddef
 
 def TestIdentifyArgs()

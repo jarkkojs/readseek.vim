@@ -58,6 +58,7 @@ Plug mappings are provided for users to bind to preferred keys:
           <Plug>(ReadseekReferences)    :ReadseekReferences
           <Plug>(ReadseekHover)         :ReadseekHover
           <Plug>(ReadseekRename)        :ReadseekRename
+          <Plug>(ReadseekSearch)        :ReadseekSearch
 
                                                         *g:readseek_root_markers*
   g:readseek_root_markers
@@ -89,7 +90,7 @@ Examples~
   nnoremap <silent> gr <Plug>(ReadseekReferences)
   nnoremap <silent> K <Plug>(ReadseekHover)
   nnoremap <silent> ,rn <Plug>(ReadseekRename)
-  nnoremap <silent> ,rs :ReadseekSearch<CR>
+  nnoremap <silent> ,rs <Plug>(ReadseekSearch)
 <
 
 Troubleshooting~
