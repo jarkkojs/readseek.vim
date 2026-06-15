@@ -5,7 +5,7 @@ readseek.vim                                                  *readseek.vim*
 Vim9 plugin frontend for the readseek CLI.
 
 Requirements~
-  readseek 0.3.4 or newer
+  readseek 0.3.5 or newer
   Vim with +job support
 
 Commands~
