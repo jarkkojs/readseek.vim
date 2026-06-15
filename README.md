@@ -4,7 +4,7 @@
 [`readseek`](https://github.com/jarkkojs/readseek). It's written with
 `vim9script`.
 
-The plugin assumes `readseek` is installed and requires `readseek >= 0.3.6`.
+The plugin assumes `readseek` is installed and requires `readseek >= 0.3.8`.
 
 Before using the plugin, initialize the readseek map cache:
 
@@ -72,8 +72,8 @@ nnoremap <silent> ,rm <Plug>(ReadseekMap)
 - `:ReadseekDefinition` jumps to one definition or opens quickfix for multiple.
 - `:ReadseekReferences` opens quickfix with references for the cursor identifier.
 - `:ReadseekRename` prompts for a new name and updates references found by readseek.
-
 - `:ReadseekMap` maps the current buffer to a symbol outline in the results list.
+
 ## Tests
 
 Run the lightweight Vim script test suite with:

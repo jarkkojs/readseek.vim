@@ -5,7 +5,7 @@ readseek.vim                                                  *readseek.vim*
 Vim9 plugin frontend for the readseek CLI.
 
 Requirements~
-  readseek 0.3.6 or newer
+  readseek 0.3.8 or newer
   Vim with +job support
 
 Commands~
@@ -53,6 +53,7 @@ Commands~
         Map the current buffer to symbols and load them into the configured
         results list. Each symbol shows its kind and name; jump to
         definitions with |:cnext|, |:cprev|.
+
 Options~
                                                         *g:readseek_executable*
   g:readseek_executable

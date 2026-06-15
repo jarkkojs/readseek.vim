@@ -191,6 +191,33 @@ def TestMap()
   Check('Map function exists', exists('*readseek#Map') == 1)
 enddef
 
+def TestSearchLocations()
+  var json = {
+    results: [{
+      file: 'src/main.rs',
+      matches: [
+        {
+          start_line: 51,
+          end_line: 64,
+          hashlines: [{line: 51, hash: '56c', text: 'fn main() {'}],
+        },
+        {
+          start_line: 70,
+          end_line: 72,
+          hashlines: [],
+        },
+      ],
+    }],
+  }
+  var locations = readseek#SearchLocations(json, '/proj')
+  Check('search location count', len(locations) == 2)
+  Check('search uses start_line', locations[0].line == 51)
+  Check('search text from first hashline', locations[0].text ==# 'fn main() {')
+  Check('search resolves file', locations[0].file ==# '/proj/src/main.rs')
+  Check('search empty hashlines text', locations[1].text ==# '')
+  Check('search empty key yields nothing', empty(readseek#SearchLocations({}, '/proj')))
+enddef
+
 TestQuickfixItems()
 TestResultLists()
 TestMappings()
@@ -200,6 +227,7 @@ TestHealthCache()
 TestReferenceFeedback()
 TestHoverLines()
 TestMap()
+TestSearchLocations()
 
 if !empty(failures)
   writefile(failures, 'test-readseek-failures.log')

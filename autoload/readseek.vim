@@ -180,21 +180,7 @@ export def Search()
       return
     endif
 
-    var files = get(result.json, 'files', [])
-    var locations: list<any> = []
-    for file_entry in files
-      var file = ResolveLocationFile(get(file_entry, 'file', ''), project_root)
-      var matches = get(file_entry, 'matches', [])
-      for match_entry in matches
-        add(locations, {
-          file: file,
-          line: get(match_entry, 'line', 1),
-          column: get(match_entry, 'column', 1),
-          text: get(match_entry, 'text', ''),
-        })
-      endfor
-    endfor
-
+    var locations = SearchLocations(result.json, project_root)
     if empty(locations)
       Notify($'no matches for {pattern}', 'info')
       return
@@ -210,7 +196,7 @@ export def Map()
   var tail = fnamemodify(path, ':t')
   Status('mapping ' .. tail .. '...')
 
-  job.Run(['map', path], '', (result: dict<any>) => {
+  job.Run(['map', '--stdin', path], buffer.Stdin(), (result: dict<any>) => {
     if !result.ok
       Notify(get(result, 'error', 'readseek map failed'), 'error')
       return
@@ -303,10 +289,17 @@ def ApplyRename(locations: list<any>, old_name: string, new_name: string, projec
     endfor
 
     if writefile(entry.lines, file) != 0
+      var unrestored: list<string> = []
       for changed_file in keys(changed)
-        writefile(originals[changed_file], changed_file)
+        if writefile(originals[changed_file], changed_file) != 0
+          add(unrestored, changed_file)
+        endif
       endfor
-      Notify($'rename aborted: failed to write {file}', 'error')
+      if empty(unrestored)
+        Notify($'rename aborted: failed to write {file}', 'error')
+      else
+        Notify($'rename aborted: failed to write {file}; could not restore {join(unrestored, ", ")}', 'error')
+      endif
       return
     endif
     changed[file] = true
@@ -362,18 +355,18 @@ def ReloadChangedBuffers(changed: dict<bool>)
         continue
       endif
       var views: list<dict<any>> = []
-      if exists('*win_findbuf')
+      if exists('*win_findbuf') && exists('*win_execute')
         for window_id in win_findbuf(buffer_number)
-          add(views, {id: window_id, view: winsaveview()})
+          win_execute(window_id, 'let g:readseek_saved_view = winsaveview()')
+          add(views, {id: window_id, view: g:readseek_saved_view})
         endfor
+        unlet! g:readseek_saved_view
       endif
       execute $'checktime {buffer_number}'
-      if exists('*win_execute')
-        for entry in views
-          var view_str = string(entry.view)
-          win_execute(entry.id, 'call winrestview(' .. view_str .. ')')
-        endfor
-      endif
+      for entry in views
+        var view_str = string(entry.view)
+        win_execute(entry.id, 'call winrestview(' .. view_str .. ')')
+      endfor
     endfor
   finally
     &autoread = save_autoread
@@ -387,7 +380,27 @@ def LocationCompare(left: dict<any>, right: dict<any>): number
     return right_line - left_line
   endif
 
-  return get(left, 'column', 0) - get(right, 'column', 0)
+  # Descending column so that applying replacements left of an earlier edit
+  # does not shift the stored columns of later edits on the same line.
+  return get(right, 'column', 0) - get(left, 'column', 0)
+enddef
+
+export def SearchLocations(json: dict<any>, project_root: string): list<any>
+  var locations: list<any> = []
+  for file_entry in get(json, 'results', [])
+    var file = ResolveLocationFile(get(file_entry, 'file', ''), project_root)
+    for match_entry in get(file_entry, 'matches', [])
+      var hashlines = get(match_entry, 'hashlines', [])
+      var text = empty(hashlines) ? '' : get(hashlines[0], 'text', '')
+      add(locations, {
+        file: file,
+        line: get(match_entry, 'start_line', 1),
+        column: 1,
+        text: text,
+      })
+    endfor
+  endfor
+  return locations
 enddef
 
 def ResolveLocationFile(file: string, project_root: string): string
