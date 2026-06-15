@@ -5,21 +5,22 @@ readseek.vim                                                  *readseek.vim*
 Vim9 plugin frontend for the readseek CLI.
 
 Requirements~
-  readseek 0.2.10 or newer
+  readseek 0.3.2 or newer
   Vim with +job support
 
 Commands~
                                                         *:ReadseekCheckHealth*
   :ReadseekCheckHealth
-        Check that |g:readseek_executable| can be found and that its version is
-        supported. Successful checks are cached for the Vim session.
+        Display a dashboard popup showing the readseek executable path,
+        detected version, .readseek/ status, and project root. Uses popup
+        styling with rounded borders and color-coded status indicators.
 
                                                         *:ReadseekHover*
   :ReadseekHover
         Run readseek identify for the current buffer and cursor position. The
         current buffer is sent through stdin, so unsaved changes are included.
-        Shows identifier context in a popup window when available, otherwise by
-        echoing a one-line message.
+        Shows identifier context in a styled popup window with rounded
+        borders, scrollbar, and title bar showing the identifier name.
 
                                                         *:ReadseekDefinition*
   :ReadseekDefinition
@@ -39,6 +40,20 @@ Commands~
         references --compact for the current project root, and rewrite each
         matching file location. Modified buffers are refused to avoid losing
         unsaved changes.
+
+                                                        *:ReadseekInit*
+  :ReadseekInit
+        Initialize a .readseek/ directory in the current working directory
+        by running readseek init. Prompts for confirmation before creating
+        the directory. readseek refreshes the map cache internally when it
+        runs.
+
+                                                        *:ReadseekSearch*
+  :ReadseekSearch
+        Prompts for an AST search pattern, then runs readseek search across
+        the current project root. Results are loaded into the configured
+        results list. Pattern syntax follows ast-grep conventions: $NAME for
+        single-node captures, $$$NAME for zero-or-more sibling captures.
 
 Options~
                                                         *g:readseek_executable*
@@ -63,6 +78,14 @@ Plug mappings are provided for users to bind to preferred keys:
         'quickfix' for |setqflist()| and |:copen| or 'location' for
         |setloclist()| and |:lopen|. Default: 'quickfix'
 
+Highlight groups~
+                                                        *readseek-highlights*
+  ReadseekOk       green   success notifications
+  ReadseekWarn     yellow  warning notifications
+  ReadseekError    red     error notifications
+  ReadseekBorder   blue    popup border color
+  ReadseekTitle    blue    popup title bar (bold)
+
 Examples~
 >
   let g:readseek_executable = '/usr/local/bin/readseek'
@@ -73,15 +96,21 @@ Examples~
   nnoremap <silent> gr <Plug>(ReadseekReferences)
   nnoremap <silent> K <Plug>(ReadseekHover)
   nnoremap <silent> ,rn <Plug>(ReadseekRename)
+  nnoremap <silent> ,rs :ReadseekSearch<CR>
 <
 
 Troubleshooting~
-  Run :ReadseekCheckHealth first when commands fail. It reports missing
-  executables and unsupported readseek versions.
+  Run :ReadseekCheckHealth first when commands fail. The dashboard popup
+  shows executable status, version, .readseek/ availability, and project root
+  with color-coded indicators (✓ green, ✗ red).
 
   If no definition or references are found, confirm the cursor is on an
   identifier that readseek can recognize and that the project root selected by
   |g:readseek_root_markers| includes the files to search.
+
+  If readseek search or map commands fail, run :ReadseekInit to create a
+  .readseek/ directory. readseek refreshes the map cache internally when it
+  runs.
 
   Results use compact readseek locations: file, line, column, and text. With
   quickfix output, use |:cnext|, |:cprev|, and |:cclose|. With location-list

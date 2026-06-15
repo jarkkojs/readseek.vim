@@ -7,27 +7,71 @@ import autoload 'readseek/buffer.vim'
 import autoload 'readseek/config.vim'
 import autoload 'readseek/job.vim'
 import autoload 'readseek/quickfix.vim'
+import autoload 'readseek/repo.vim'
 import autoload 'readseek/root.vim'
 
 export def CheckHealth()
   var result = config.CheckHealth()
-  if result.ok
-    echo result.message
+
+  var lines: list<string> = []
+
+  var exec_ok = config.IsExecutableAvailable()
+  var exec_path = config.ExecutablePath()
+  if exec_ok
+    add(lines, $'✓ {exec_path}')
   else
-    Error(result.message)
+    add(lines, $'✗ {config.Executable()} (not found)')
   endif
+
+  var version = config.Version()
+  var version_ok = config.VersionAtLeast(version, config.MinimumVersion)
+  if version_ok
+    add(lines, $'✓ readseek {version}')
+  else
+    add(lines, $'✗ readseek {empty(version) ? "unknown" : version} (need >= {config.MinimumVersion})')
+  endif
+
+  var readseek_dir = repo.FindReadseekDir()
+  if !empty(readseek_dir)
+    add(lines, $'✓ .readseek/ at {readseek_dir}')
+  else
+    add(lines, '✗ .readseek/ not found (run :ReadseekInit)')
+  endif
+
+  var project_root = root.Find()
+  add(lines, $'  project root: {project_root}')
+
+  if exists('*popup_create')
+    popup_create(lines, {
+      pos: 'center',
+      padding: [1, 2, 1, 2],
+      border: [1, 1, 1, 1],
+      borderchars: ['─', '│', '─', '│', '╭', '╮', '╯', '╰'],
+      borderhighlight: ['ReadseekBorder'],
+      title: ' readseek health ',
+      scrollbar: 0,
+      wrap: false,
+      close: 'click',
+      moved: 'any',
+    })
+    return
+  endif
+
+  for line in lines
+    echo line
+  endfor
 enddef
 
 export def Hover()
   Identify((result: dict<any>) => {
     if !result.ok
-      Error(get(result, 'error', 'readseek identify failed'))
+      Notify(get(result, 'error', 'readseek identify failed'), 'error')
       return
     endif
 
     var lines = HoverLines(result.json)
     if empty(lines)
-      echo 'readseek.vim: no identifier at cursor'
+      Notify('no identifier at cursor', 'info')
       return
     endif
 
@@ -40,13 +84,13 @@ export def Definition()
   Status('finding definition...')
   Identify((identify_result: dict<any>) => {
     if !identify_result.ok
-      Error(get(identify_result, 'error', 'readseek identify failed'))
+      Notify(get(identify_result, 'error', 'readseek identify failed'), 'error')
       return
     endif
 
     job.Run(['definition', '--stdin', '--compact', project_root], identify_result.stdout, (definition_result: dict<any>) => {
       if !definition_result.ok
-        Error(get(definition_result, 'error', 'readseek definition failed'))
+        Notify(get(definition_result, 'error', 'readseek definition failed'), 'error')
         return
       endif
       HandleDefinitionLocations(get(definition_result.json, 'locations', []), project_root)
@@ -57,13 +101,13 @@ enddef
 export def References()
   Identify((identify_result: dict<any>) => {
     if !identify_result.ok
-      Error(get(identify_result, 'error', 'readseek identify failed'))
+      Notify(get(identify_result, 'error', 'readseek identify failed'), 'error')
       return
     endif
 
     var identifier_text = IdentifierText(identify_result.json)
     if empty(identifier_text)
-      echo 'readseek.vim: no identifier at cursor'
+      Notify('no identifier at cursor', 'info')
       return
     endif
 
@@ -71,13 +115,13 @@ export def References()
     Status($'finding references for {identifier_text}...')
     job.Run(['references', '--compact', project_root, identifier_text], '', (references_result: dict<any>) => {
       if !references_result.ok
-        Error(get(references_result, 'error', 'readseek references failed'))
+        Notify(get(references_result, 'error', 'readseek references failed'), 'error')
         return
       endif
 
       var locations = get(references_result.json, 'locations', [])
       if empty(locations)
-        echo $'readseek.vim: no references found for {identifier_text}'
+        Notify($'no references found for {identifier_text}', 'info')
         return
       endif
 
@@ -93,13 +137,13 @@ enddef
 export def Rename()
   Identify((identify_result: dict<any>) => {
     if !identify_result.ok
-      Error(get(identify_result, 'error', 'readseek identify failed'))
+      Notify(get(identify_result, 'error', 'readseek identify failed'), 'error')
       return
     endif
 
     var old_name = IdentifierText(identify_result.json)
     if empty(old_name)
-      echo 'readseek.vim: no identifier at cursor'
+      Notify('no identifier at cursor', 'info')
       return
     endif
 
@@ -112,19 +156,78 @@ export def Rename()
     Status($'finding references for {old_name}...')
     job.Run(['references', '--compact', project_root, old_name], '', (references_result: dict<any>) => {
       if !references_result.ok
-        Error(get(references_result, 'error', 'readseek references failed'))
+        Notify(get(references_result, 'error', 'readseek references failed'), 'error')
         return
       endif
 
       var locations = get(references_result.json, 'locations', [])
       if empty(locations)
-        echo $'readseek.vim: no references found for {old_name}'
+        Notify($'no references found for {old_name}', 'info')
         return
       endif
 
       Status($'{len(locations)} {Plural(len(locations), 'reference')} found for {old_name}')
       ApplyRename(locations, old_name, new_name, project_root)
     })
+  })
+enddef
+
+export def Init()
+  var dir = getcwd()
+  var proceed = confirm($'Create .readseek/ in {dir} ?', "&Yes\n&No", 1)
+  if proceed != 1
+    return
+  endif
+
+  Notify('initializing .readseek/...', 'info')
+  job.Run(['init', dir], '', (result: dict<any>) => {
+    if result.ok
+      Notify('.readseek/ initialized', 'ok')
+    else
+      var msg = get(result, 'stderr', 'init failed')
+      Notify(empty(msg) ? 'init failed' : msg, 'error')
+    endif
+  })
+enddef
+
+export def Search()
+  var pattern = input('readseek pattern: ')
+  if empty(pattern)
+    return
+  endif
+
+  var project_root = root.Find()
+  Status($'searching for {pattern}...')
+
+  job.Run(['search', project_root, pattern], '', (result: dict<any>) => {
+    if !result.ok
+      var msg = get(result, 'stderr', 'search failed')
+      Notify(empty(msg) ? 'search failed' : msg, 'error')
+      return
+    endif
+
+    var files = get(result.json, 'files', [])
+    var locations: list<any> = []
+    for file_entry in files
+      var file = ResolveLocationFile(get(file_entry, 'file', ''), project_root)
+      var matches = get(file_entry, 'matches', [])
+      for match_entry in matches
+        add(locations, {
+          file: file,
+          line: get(match_entry, 'line', 1),
+          column: get(match_entry, 'column', 1),
+          text: get(match_entry, 'text', ''),
+        })
+      endfor
+    endfor
+
+    if empty(locations)
+      Notify($'no matches for {pattern}', 'info')
+      return
+    endif
+
+    Notify($'{len(locations)} {Plural(len(locations), "match")} for {pattern}', 'ok')
+    quickfix.SetLocations(locations, $'readseek search: {pattern}')
   })
 enddef
 
@@ -142,7 +245,7 @@ enddef
 
 def HandleDefinitionLocations(locations: list<any>, project_root: string)
   if empty(locations)
-    echo 'readseek.vim: no definitions found'
+    Notify('no definitions found', 'info')
     return
   endif
 
@@ -162,7 +265,7 @@ enddef
 def OpenLocation(location: dict<any>, project_root: string)
   var file = ResolveLocationFile(get(location, 'file', ''), project_root)
   if empty(file)
-    Error('readseek.vim: definition result has no file')
+    Notify('definition result has no file', 'error')
     return
   endif
 
@@ -173,7 +276,7 @@ enddef
 def ApplyRename(locations: list<any>, old_name: string, new_name: string, project_root: string)
   var plan_result = BuildRenamePlan(locations, old_name, project_root)
   if !plan_result.ok
-    Error(plan_result.error)
+    Notify(plan_result.error, 'error')
     return
   endif
 
@@ -188,14 +291,14 @@ def ApplyRename(locations: list<any>, old_name: string, new_name: string, projec
     endfor
 
     if writefile(entry.lines, file) != 0
-      Error($'readseek.vim: failed to write {file}')
+      Notify($'failed to write {file}', 'error')
       return
     endif
     changed[file] = true
   endfor
 
   ReloadChangedBuffers(changed)
-  echo $'readseek.vim: renamed {old_name} to {new_name} in {plan_result.count} locations'
+  Notify($'renamed {old_name} to {new_name} in {plan_result.count} locations', 'ok')
 enddef
 
 def BuildRenamePlan(locations: list<any>, old_name: string, project_root: string): dict<any>
@@ -203,12 +306,12 @@ def BuildRenamePlan(locations: list<any>, old_name: string, project_root: string
   for location in locations
     var file = ResolveLocationFile(get(location, 'file', ''), project_root)
     if empty(file) || !filereadable(file)
-      return {ok: false, error: $'readseek.vim: cannot read {file}'}
+      return {ok: false, error: $'cannot read {file}'}
     endif
 
     var buffer_number = bufnr(file)
     if buffer_number != -1 && getbufvar(buffer_number, '&modified')
-      return {ok: false, error: $'readseek.vim: buffer has unsaved changes: {file}'}
+      return {ok: false, error: $'buffer has unsaved changes: {file}'}
     endif
 
     if !has_key(plan, file)
@@ -220,12 +323,12 @@ def BuildRenamePlan(locations: list<any>, old_name: string, project_root: string
     var lines = plan[file].lines
 
     if line_number < 1 || line_number > len(lines)
-      return {ok: false, error: $'readseek.vim: invalid location {file}:{line_number}:{column}'}
+      return {ok: false, error: $'invalid location {file}:{line_number}:{column}'}
     endif
 
     var line_text = lines[line_number - 1]
     if column < 1 || strpart(line_text, column - 1, len(old_name)) !=# old_name
-      return {ok: false, error: $'readseek.vim: stale location {file}:{line_number}:{column}'}
+      return {ok: false, error: $'stale location {file}:{line_number}:{column}'}
     endif
 
     add(plan[file].locations, {line: line_number, column: column})
@@ -301,14 +404,23 @@ enddef
 
 def ShowHover(lines: list<string>)
   if exists('*popup_create')
+    var title = ' readseek '
+    if !empty(lines)
+      title = $' {lines[0]} '
+    endif
+
     popup_create(lines, {
       pos: 'botleft',
       line: 'cursor+1',
       col: 'cursor',
       padding: [0, 1, 0, 1],
-      border: [],
-      title: ' readseek ',
+      border: [1, 1, 1, 1],
+      borderchars: ['─', '│', '─', '│', '╭', '╮', '╯', '╰'],
+      borderhighlight: ['ReadseekBorder'],
+      title: title,
       moved: 'any',
+      scrollbar: 1,
+      wrap: false,
     })
     return
   endif
@@ -316,10 +428,34 @@ def ShowHover(lines: list<string>)
   echo join(lines, ' | ')
 enddef
 
-def Error(message: string)
-  echohl ErrorMsg
-  echomsg message
-  echohl None
+def Notify(message: string, level: string = 'info')
+  if !exists('*popup_notification')
+    if level == 'error'
+      echohl ErrorMsg
+    elseif level == 'warn'
+      echohl WarningMsg
+    endif
+    echomsg $'readseek.vim: {message}'
+    echohl None
+    return
+  endif
+
+  var highlight = 'ReadseekInfo'
+  if level == 'error'
+    highlight = 'ReadseekError'
+  elseif level == 'warn'
+    highlight = 'ReadseekWarn'
+  elseif level == 'ok'
+    highlight = 'ReadseekOk'
+  endif
+
+  popup_notification($' readseek.vim: {message} ', {
+    highlight: highlight,
+    time: 4000,
+    pos: 'topright',
+    line: 1,
+    col: 1,
+  })
 enddef
 
 def Status(message: string)
