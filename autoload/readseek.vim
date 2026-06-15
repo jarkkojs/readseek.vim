@@ -7,7 +7,6 @@ import autoload 'readseek/buffer.vim'
 import autoload 'readseek/config.vim'
 import autoload 'readseek/job.vim'
 import autoload 'readseek/quickfix.vim'
-import autoload 'readseek/repo.vim'
 import autoload 'readseek/root.vim'
 
 export def CheckHealth()
@@ -29,13 +28,6 @@ export def CheckHealth()
     add(lines, $'✓ readseek {version}')
   else
     add(lines, $'✗ readseek {empty(version) ? "unknown" : version} (need >= {config.MinimumVersion})')
-  endif
-
-  var readseek_dir = repo.FindReadseekDir()
-  if !empty(readseek_dir)
-    add(lines, $'✓ .readseek/ at {readseek_dir}')
-  else
-    add(lines, '✗ .readseek/ not found (run :ReadseekInit)')
   endif
 
   var project_root = root.Find()
@@ -169,24 +161,6 @@ export def Rename()
       Status($'{len(locations)} {Plural(len(locations), 'reference')} found for {old_name}')
       ApplyRename(locations, old_name, new_name, project_root)
     })
-  })
-enddef
-
-export def Init()
-  var dir = getcwd()
-  var proceed = confirm($'Create .readseek/ in {dir} ?', "&Yes\n&No", 1)
-  if proceed != 1
-    return
-  endif
-
-  Notify('initializing .readseek/...', 'info')
-  job.Run(['init', dir], '', (result: dict<any>) => {
-    if result.ok
-      Notify('.readseek/ initialized', 'ok')
-    else
-      var msg = get(result, 'stderr', 'init failed')
-      Notify(empty(msg) ? 'init failed' : msg, 'error')
-    endif
   })
 enddef
 

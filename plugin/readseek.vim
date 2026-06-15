@@ -24,7 +24,6 @@ command! ReadseekHover readseek#Hover()
 command! ReadseekDefinition readseek#Definition()
 command! ReadseekReferences readseek#References()
 command! ReadseekRename readseek#Rename()
-command! ReadseekInit readseek#Init()
 command! ReadseekSearch readseek#Search()
 
 def MapPlugDefault(lhs: string, rhs: string)

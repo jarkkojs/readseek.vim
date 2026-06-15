@@ -4,7 +4,13 @@
 [`readseek`](https://github.com/jarkkojs/readseek). It's written with
 `vim9script`.
 
-The plugin assumes `readseek` is installed and requires `readseek >= 0.2.10`.
+The plugin assumes `readseek` is installed and requires `readseek >= 0.3.2`.
+
+Before using the plugin, initialize the readseek map cache:
+
+```sh
+readseek init
+```
 
 ## Installation
 
