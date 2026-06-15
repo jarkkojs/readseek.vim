@@ -25,6 +25,7 @@ command! ReadseekDefinition readseek#Definition()
 command! ReadseekReferences readseek#References()
 command! ReadseekRename readseek#Rename()
 command! ReadseekSearch readseek#Search()
+command! ReadseekMap readseek#Map()
 
 def MapPlugDefault(lhs: string, rhs: string)
   if !empty(maparg(lhs, 'n'))
@@ -38,6 +39,7 @@ MapPlugDefault('<Plug>(ReadseekReferences)', '<ScriptCmd>ReadseekReferences<CR>'
 MapPlugDefault('<Plug>(ReadseekHover)', '<ScriptCmd>ReadseekHover<CR>')
 MapPlugDefault('<Plug>(ReadseekRename)', '<ScriptCmd>ReadseekRename<CR>')
 MapPlugDefault('<Plug>(ReadseekSearch)', '<ScriptCmd>ReadseekSearch<CR>')
+MapPlugDefault('<Plug>(ReadseekMap)', '<ScriptCmd>ReadseekMap<CR>')
 
 highlight default ReadseekOk ctermfg=green guifg=#00d700
 highlight default ReadseekInfo ctermfg=blue guifg=#5f87af

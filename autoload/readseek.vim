@@ -205,6 +205,42 @@ export def Search()
   })
 enddef
 
+export def Map()
+  var path = buffer.Path()
+  var tail = fnamemodify(path, ':t')
+  Status('mapping ' .. tail .. '...')
+
+  job.Run(['map', path], '', (result: dict<any>) => {
+    if !result.ok
+      Notify(get(result, 'error', 'readseek map failed'), 'error')
+      return
+    endif
+
+    var symbols = get(result.json, 'symbols', [])
+    if empty(symbols)
+      Notify('no symbols found', 'info')
+      return
+    endif
+
+    var locations: list<any> = []
+    for symbol in symbols
+      var kind = get(symbol, 'kind', 'symbol')
+      var name = get(symbol, 'name', '')
+      var entry = {
+        file: path,
+        line: get(symbol, 'start_line', 1),
+        column: 1,
+        text: kind .. ' ' .. name,
+      }
+      add(locations, entry)
+    endfor
+
+    var count = len(locations)
+    Status(count .. ' ' .. Plural(count, 'symbol') .. ' found')
+    quickfix.SetLocations(locations, 'readseek map: ' .. tail)
+  })
+enddef
+
 export def Identify(Callback: func)
   job.Run(buffer.IdentifyArgs(), buffer.Stdin(), Callback)
 enddef
@@ -255,8 +291,10 @@ def ApplyRename(locations: list<any>, old_name: string, new_name: string, projec
   endif
 
   var changed: dict<bool> = {}
+  var originals: dict<list<string>> = {}
   for file in keys(plan_result.plan)
     var entry = plan_result.plan[file]
+    originals[file] = copy(entry.lines)
     sort(entry.locations, (a, b) => LocationCompare(a, b))
 
     for location in entry.locations
@@ -265,7 +303,10 @@ def ApplyRename(locations: list<any>, old_name: string, new_name: string, projec
     endfor
 
     if writefile(entry.lines, file) != 0
-      Notify($'failed to write {file}', 'error')
+      for changed_file in keys(changed)
+        writefile(originals[changed_file], changed_file)
+      endfor
+      Notify($'rename aborted: failed to write {file}', 'error')
       return
     endif
     changed[file] = true
@@ -317,8 +358,21 @@ def ReloadChangedBuffers(changed: dict<bool>)
   try
     for file in keys(changed)
       var buffer_number = bufnr(file)
-      if buffer_number != -1
-        execute $'checktime {buffer_number}'
+      if buffer_number == -1
+        continue
+      endif
+      var views: list<dict<any>> = []
+      if exists('*win_findbuf')
+        for window_id in win_findbuf(buffer_number)
+          add(views, {id: window_id, view: winsaveview()})
+        endfor
+      endif
+      execute $'checktime {buffer_number}'
+      if exists('*win_execute')
+        for entry in views
+          var view_str = string(entry.view)
+          win_execute(entry.id, 'call winrestview(' .. view_str .. ')')
+        endfor
       endif
     endfor
   finally
@@ -327,12 +381,6 @@ def ReloadChangedBuffers(changed: dict<bool>)
 enddef
 
 def LocationCompare(left: dict<any>, right: dict<any>): number
-  var left_file = get(left, 'file', '')
-  var right_file = get(right, 'file', '')
-  if left_file !=# right_file
-    return left_file ># right_file ? -1 : 1
-  endif
-
   var left_line = get(left, 'line', 0)
   var right_line = get(right, 'line', 0)
   if left_line != right_line

@@ -48,6 +48,11 @@ Commands~
         results list. Pattern syntax follows ast-grep conventions: $NAME for
         single-node captures, $$$NAME for zero-or-more sibling captures.
 
+                                                         *:ReadseekMap*
+  :ReadseekMap
+        Map the current buffer to symbols and load them into the configured
+        results list. Each symbol shows its kind and name; jump to
+        definitions with |:cnext|, |:cprev|.
 Options~
                                                         *g:readseek_executable*
   g:readseek_executable
@@ -59,6 +64,7 @@ Plug mappings are provided for users to bind to preferred keys:
           <Plug>(ReadseekHover)         :ReadseekHover
           <Plug>(ReadseekRename)        :ReadseekRename
           <Plug>(ReadseekSearch)        :ReadseekSearch
+          <Plug>(ReadseekMap)           :ReadseekMap
 
                                                         *g:readseek_root_markers*
   g:readseek_root_markers

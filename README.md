@@ -52,6 +52,7 @@ Available `<Plug>` mappings:
 | `<Plug>(ReadseekRename)`     | `:ReadseekRename`      |
 | `<Plug>(ReadseekHover)`      | `:ReadseekHover`       |
 | `<Plug>(ReadseekSearch)`     | `:ReadseekSearch`      |
+| `<Plug>(ReadseekMap)`        | `:ReadseekMap`         |
 
 Define your preferred keys in vimrc:
 
@@ -61,6 +62,7 @@ nnoremap <silent> gr <Plug>(ReadseekReferences)
 nnoremap <silent> K <Plug>(ReadseekHover)
 nnoremap <silent> ,rn <Plug>(ReadseekRename)
 nnoremap <silent> ,rs <Plug>(ReadseekSearch)
+nnoremap <silent> ,rm <Plug>(ReadseekMap)
 ```
 
 ## Commands
@@ -71,6 +73,7 @@ nnoremap <silent> ,rs <Plug>(ReadseekSearch)
 - `:ReadseekReferences` opens quickfix with references for the cursor identifier.
 - `:ReadseekRename` prompts for a new name and updates references found by readseek.
 
+- `:ReadseekMap` maps the current buffer to a symbol outline in the results list.
 ## Tests
 
 Run the lightweight Vim script test suite with:

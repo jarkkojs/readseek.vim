@@ -70,11 +70,13 @@ def TestMappings()
   var hover = maparg('<Plug>(ReadseekHover)', 'n', false, true)
   var rn = maparg('<Plug>(ReadseekRename)', 'n', false, true)
   var search = maparg('<Plug>(ReadseekSearch)', 'n', false, true)
+  var map_sym = maparg('<Plug>(ReadseekMap)', 'n', false, true)
   Check('definition plug mapping', !empty(gd) && gd.rhs ==# '<ScriptCmd>ReadseekDefinition<CR>')
   Check('references plug mapping', !empty(gr) && gr.rhs ==# '<ScriptCmd>ReadseekReferences<CR>')
   Check('hover plug mapping preserved', !empty(hover) && hover.rhs ==# ":echo 'keep'<CR>")
   Check('rename plug mapping', !empty(rn) && rn.rhs ==# '<ScriptCmd>ReadseekRename<CR>')
   Check('search plug mapping', !empty(search) && search.rhs ==# '<ScriptCmd>ReadseekSearch<CR>')
+  Check('map plug mapping', !empty(map_sym) && map_sym.rhs ==# '<ScriptCmd>ReadseekMap<CR>')
 enddef
 
 def TestIdentifyArgs()
@@ -184,6 +186,11 @@ def TestHoverLines()
   Check('hover location label', index(lines, 'location: src/file.c:1:6') >= 0)
 enddef
 
+def TestMap()
+  Check('Map command exists', exists(':ReadseekMap') == 2)
+  Check('Map function exists', exists('*readseek#Map') == 1)
+enddef
+
 TestQuickfixItems()
 TestResultLists()
 TestMappings()
@@ -192,6 +199,7 @@ TestRootMarkers()
 TestHealthCache()
 TestReferenceFeedback()
 TestHoverLines()
+TestMap()
 
 if !empty(failures)
   writefile(failures, 'test-readseek-failures.log')
