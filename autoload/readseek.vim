@@ -339,7 +339,7 @@ def LocationCompare(left: dict<any>, right: dict<any>): number
     return right_line - left_line
   endif
 
-  return get(right, 'column', 0) - get(left, 'column', 0)
+  return get(left, 'column', 0) - get(right, 'column', 0)
 enddef
 
 def ResolveLocationFile(file: string, project_root: string): string

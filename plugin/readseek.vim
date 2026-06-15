@@ -39,6 +39,7 @@ MapPlugDefault('<Plug>(ReadseekHover)', '<ScriptCmd>ReadseekHover<CR>')
 MapPlugDefault('<Plug>(ReadseekRename)', '<ScriptCmd>ReadseekRename<CR>')
 
 highlight default ReadseekOk ctermfg=green guifg=#00d700
+highlight default ReadseekInfo ctermfg=blue guifg=#5f87af
 highlight default ReadseekWarn ctermfg=yellow guifg=#d7d700
 highlight default ReadseekError ctermfg=red guifg=#d70000
 highlight default ReadseekBorder ctermfg=blue guifg=#5f87af
