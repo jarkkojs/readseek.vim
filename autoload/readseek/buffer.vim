@@ -30,8 +30,7 @@ enddef
 export def IdentifyArgs(): list<string>
   return [
     'identify',
-    '--stdin',
-    '--path', Path(),
+    '--stdin', Path(),
     '--line', string(Line()),
     '--column', string(ByteColumn()),
   ]

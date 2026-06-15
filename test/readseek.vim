@@ -75,6 +75,24 @@ def TestMappings()
   Check('rename plug mapping', !empty(rn) && rn.rhs ==# '<ScriptCmd>ReadseekRename<CR>')
 enddef
 
+def TestIdentifyArgs()
+  var base = tempname()
+  mkdir(base .. '/project', 'p')
+  writefile(['alpha beta'], base .. '/project/file.c')
+  execute 'edit ' .. fnameescape(base .. '/project/file.c')
+  cursor(1, 7)
+
+  var args = readseek#buffer#IdentifyArgs()
+  Check('identify command', args[0] ==# 'identify')
+  Check('identify stdin path option', index(args, '--stdin') >= 0 && args[index(args, '--stdin') + 1] ==# expand('%:p'))
+  Check('identify has no positional target with stdin', count(args, expand('%:p')) == 1)
+  Check('identify line option', index(args, '--line') >= 0 && args[index(args, '--line') + 1] ==# '1')
+  Check('identify column option', index(args, '--column') >= 0 && args[index(args, '--column') + 1] ==# '7')
+
+  bwipe!
+  delete(base, 'rf')
+enddef
+
 def TestRootMarkers()
   var base = tempname()
   mkdir(base .. '/project/src', 'p')
@@ -166,6 +184,7 @@ enddef
 TestQuickfixItems()
 TestResultLists()
 TestMappings()
+TestIdentifyArgs()
 TestRootMarkers()
 TestHealthCache()
 TestReferenceFeedback()
