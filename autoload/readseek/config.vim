@@ -3,7 +3,7 @@
 
 vim9script
 
-export const MinimumVersion = '0.3.15'
+export const MinimumVersion = '0.3.16'
 const HealthCacheKey = 'readseek_health'
 
 export def Executable(): string

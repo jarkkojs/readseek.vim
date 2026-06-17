@@ -245,6 +245,35 @@ def TestRenameConflict()
   delete(base, 'rf')
 enddef
 
+def TestRenameUnsupported()
+  var base = tempname()
+  mkdir(base, 'p')
+  var file = base .. '/file.vim'
+  writefile(['var target = 0'], file)
+
+  # An unsupported language is a no-op: readseek reports unsupported and leaves
+  # the file untouched. The plugin must not treat this as a failure.
+  var executable = base .. '/readseek-fake'
+  writefile([
+    '#!/bin/sh',
+    'printf ''{"language":"vimscript","unsupported":true,"applied":false,"conflicts":[],"edits":[]}\n''',
+  ], executable)
+  setfperm(executable, 'rwx------')
+
+  var save_executable = g:readseek_executable
+  g:readseek_executable = executable
+
+  execute 'edit ' .. fnameescape(file)
+  readseek#RenameTo(file, 1, 5, 'target', 'renamed')
+
+  sleep 300m
+  Check('rename unsupported leaves buffer unchanged', getline(1) ==# 'var target = 0')
+
+  g:readseek_executable = save_executable
+  bwipe!
+  delete(base, 'rf')
+enddef
+
 def TestRenameRequiresSavedBuffer()
   var base = tempname()
   mkdir(base, 'p')
@@ -340,6 +369,7 @@ TestHealthCache()
 TestReferenceFeedback()
 TestRename()
 TestRenameConflict()
+TestRenameUnsupported()
 TestRenameRequiresSavedBuffer()
 TestHoverLines()
 TestMap()
