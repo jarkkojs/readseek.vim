@@ -171,6 +171,103 @@ def TestReferenceFeedback()
   delete(base, 'rf')
 enddef
 
+def WaitFor(Cond: func(): bool): bool
+  for _ in range(40)
+    if Cond()
+      return true
+    endif
+    sleep 25m
+  endfor
+  return false
+enddef
+
+def TestRename()
+  var base = tempname()
+  mkdir(base, 'p')
+  var file = base .. '/file.c'
+  writefile(['int target = target;'], file)
+
+  # The fake applies the rename like readseek rename --apply: it rewrites the
+  # file on disk and reports the plan as JSON on stdout.
+  var executable = base .. '/readseek-fake'
+  writefile([
+    '#!/bin/sh',
+    'if [ "$1" = "rename" ]; then',
+    '  sed -i.bak ''s/target/renamed/g'' "$2"',
+    '  printf ''{"old_name":"target","new_name":"renamed","applied":true,"conflicts":[],"edits":[{"line":1,"start_column":5},{"line":1,"start_column":14}]}\n''',
+    'else',
+    '  printf ''{}\n''',
+    'fi',
+  ], executable)
+  setfperm(executable, 'rwx------')
+
+  var save_executable = g:readseek_executable
+  g:readseek_executable = executable
+
+  execute 'edit ' .. fnameescape(file)
+  readseek#RenameTo(file, 1, 5, 'target', 'renamed')
+
+  var renamed = WaitFor((): bool => getline(1) ==# 'int renamed = renamed;')
+  Check('rename rewrites and reloads buffer', renamed)
+
+  g:readseek_executable = save_executable
+  bwipe!
+  delete(base, 'rf')
+enddef
+
+def TestRenameConflict()
+  var base = tempname()
+  mkdir(base, 'p')
+  var file = base .. '/file.c'
+  writefile(['int target = 0;'], file)
+
+  # A conflict plan must not touch the file. The fake reports a conflict and
+  # leaves the file untouched, mirroring readseek refusing to apply.
+  var executable = base .. '/readseek-fake'
+  writefile([
+    '#!/bin/sh',
+    'printf ''{"old_name":"target","new_name":"renamed","applied":false,"conflicts":[{"line":1,"column":5,"reason":"already bound"}],"edits":[]}\n''',
+  ], executable)
+  setfperm(executable, 'rwx------')
+
+  var save_executable = g:readseek_executable
+  g:readseek_executable = executable
+
+  execute 'edit ' .. fnameescape(file)
+  readseek#RenameTo(file, 1, 5, 'target', 'renamed')
+
+  # Give the async job time to finish; the buffer must remain unchanged.
+  sleep 300m
+  Check('rename conflict leaves buffer unchanged', getline(1) ==# 'int target = 0;')
+
+  g:readseek_executable = save_executable
+  bwipe!
+  delete(base, 'rf')
+enddef
+
+def TestRenameRequiresSavedBuffer()
+  var base = tempname()
+  mkdir(base, 'p')
+  # A sentinel-touching fake proves the executable is never invoked when the
+  # buffer is unsaved: Rename() must bail before spawning any job.
+  var executable = base .. '/readseek-fake'
+  writefile(['#!/bin/sh', 'touch "' .. base .. '/invoked"', 'printf ''{}\n'''], executable)
+  setfperm(executable, 'rwx------')
+
+  var save_executable = g:readseek_executable
+  g:readseek_executable = executable
+
+  enew
+  setline(1, 'int target = 0;')
+  readseek#Rename()
+  sleep 300m
+  Check('rename refuses unsaved buffer', !filereadable(base .. '/invoked'))
+
+  g:readseek_executable = save_executable
+  bwipe!
+  delete(base, 'rf')
+enddef
+
 def TestHoverLines()
   var lines = readseek#HoverLines({
     identifier: {text: 'target'},
@@ -241,6 +338,9 @@ TestIdentifyArgs()
 TestRootMarkers()
 TestHealthCache()
 TestReferenceFeedback()
+TestRename()
+TestRenameConflict()
+TestRenameRequiresSavedBuffer()
 TestHoverLines()
 TestMap()
 TestInit()

@@ -139,6 +139,18 @@ export def References()
 enddef
 
 export def Rename()
+  var file = expand('%:p')
+  if empty(file) || !filereadable(file)
+    Notify('rename requires the buffer to be a saved file', 'error')
+    return
+  endif
+  if &modified
+    Notify('save the buffer before renaming', 'error')
+    return
+  endif
+
+  var line = buffer.Line()
+  var column = buffer.ByteColumn()
   Identify((identify_result: dict<any>) => {
     if !identify_result.ok
       Notify(get(identify_result, 'error', 'readseek identify failed'), 'error')
@@ -156,23 +168,31 @@ export def Rename()
       return
     endif
 
-    var project_root = root.Find()
-    Status($'finding references for {old_name}...')
-    job.Run(['refs', '--format', 'plain', project_root, old_name], '', (references_result: dict<any>) => {
-      if !references_result.ok
-        Notify(get(references_result, 'error', 'readseek references failed'), 'error')
-        return
-      endif
+    RenameTo(file, line, column, old_name, new_name)
+  })
+enddef
 
-      var locations = get(references_result.json, 'locations', [])
-      if empty(locations)
-        Notify($'no references found for {old_name}', 'info')
-        return
-      endif
+# Apply a binding-accurate rename to file via readseek rename --apply.
+export def RenameTo(file: string, line: number, column: number, old_name: string, new_name: string)
+  Status($'renaming {old_name} to {new_name}...')
+  job.Run(['rename', file,
+    '--line', string(line),
+    '--column', string(column),
+    '--to', new_name, '--apply'], '', (rename_result: dict<any>) => {
+    if !rename_result.ok
+      Notify(get(rename_result, 'error', 'readseek rename failed'), 'error')
+      return
+    endif
 
-      Status($'{len(locations)} {Plural(len(locations), 'reference')} found for {old_name}')
-      ApplyRename(locations, old_name, new_name, project_root)
-    })
+    var conflicts = get(rename_result.json, 'conflicts', [])
+    if !empty(conflicts)
+      Notify($'rename has {len(conflicts)} {Plural(len(conflicts), "conflict")}; not applied', 'warn')
+      return
+    endif
+
+    var edits = get(rename_result.json, 'edits', [])
+    ReloadChangedBuffers({[file]: true})
+    Notify($'renamed {old_name} to {new_name} in {len(edits)} {Plural(len(edits), "location")}', 'ok')
   })
 enddef
 
@@ -296,82 +316,6 @@ def OpenLocation(location: dict<any>, project_root: string)
   cursor(get(location, 'line', 1), get(location, 'column', 1))
 enddef
 
-def ApplyRename(locations: list<any>, old_name: string, new_name: string, project_root: string)
-  var plan_result = BuildRenamePlan(locations, old_name, project_root)
-  if !plan_result.ok
-    Notify(plan_result.error, 'error')
-    return
-  endif
-
-  var changed: dict<bool> = {}
-  var originals: dict<list<string>> = {}
-  for file in keys(plan_result.plan)
-    var entry = plan_result.plan[file]
-    originals[file] = copy(entry.lines)
-    sort(entry.locations, (a, b) => LocationCompare(a, b))
-
-    for location in entry.locations
-      var line_text = entry.lines[location.line - 1]
-      entry.lines[location.line - 1] = strpart(line_text, 0, location.column - 1) .. new_name .. strpart(line_text, location.column - 1 + len(old_name))
-    endfor
-
-    if writefile(entry.lines, file) != 0
-      var unrestored: list<string> = []
-      for changed_file in keys(changed)
-        if writefile(originals[changed_file], changed_file) != 0
-          add(unrestored, changed_file)
-        endif
-      endfor
-      if empty(unrestored)
-        Notify($'rename aborted: failed to write {file}', 'error')
-      else
-        Notify($'rename aborted: failed to write {file}; could not restore {join(unrestored, ", ")}', 'error')
-      endif
-      return
-    endif
-    changed[file] = true
-  endfor
-
-  ReloadChangedBuffers(changed)
-  Notify($'renamed {old_name} to {new_name} in {plan_result.count} locations', 'ok')
-enddef
-
-def BuildRenamePlan(locations: list<any>, old_name: string, project_root: string): dict<any>
-  var plan: dict<any> = {}
-  for location in locations
-    var file = ResolveLocationFile(get(location, 'file', ''), project_root)
-    if empty(file) || !filereadable(file)
-      return {ok: false, error: $'cannot read {file}'}
-    endif
-
-    var buffer_number = bufnr(file)
-    if buffer_number != -1 && getbufvar(buffer_number, '&modified')
-      return {ok: false, error: $'buffer has unsaved changes: {file}'}
-    endif
-
-    if !has_key(plan, file)
-      plan[file] = {lines: readfile(file), locations: []}
-    endif
-
-    var line_number = get(location, 'line', 0)
-    var column = get(location, 'column', 0)
-    var lines = plan[file].lines
-
-    if line_number < 1 || line_number > len(lines)
-      return {ok: false, error: $'invalid location {file}:{line_number}:{column}'}
-    endif
-
-    var line_text = lines[line_number - 1]
-    if column < 1 || strpart(line_text, column - 1, len(old_name)) !=# old_name
-      return {ok: false, error: $'stale location {file}:{line_number}:{column}'}
-    endif
-
-    add(plan[file].locations, {line: line_number, column: column})
-  endfor
-
-  return {ok: true, plan: plan, count: len(locations)}
-enddef
-
 def ReloadChangedBuffers(changed: dict<bool>)
   var save_autoread = &autoread
   set autoread
@@ -384,7 +328,7 @@ def ReloadChangedBuffers(changed: dict<bool>)
       var views: list<dict<any>> = []
       if exists('*win_findbuf') && exists('*win_execute')
         for window_id in win_findbuf(buffer_number)
-          win_execute(window_id, 'let g:readseek_saved_view = winsaveview()')
+          win_execute(window_id, 'legacy let g:readseek_saved_view = winsaveview()')
           add(views, {id: window_id, view: g:readseek_saved_view})
         endfor
         unlet! g:readseek_saved_view
@@ -392,24 +336,12 @@ def ReloadChangedBuffers(changed: dict<bool>)
       execute $'checktime {buffer_number}'
       for entry in views
         var view_str = string(entry.view)
-        win_execute(entry.id, 'call winrestview(' .. view_str .. ')')
+        win_execute(entry.id, 'legacy call winrestview(' .. view_str .. ')')
       endfor
     endfor
   finally
     &autoread = save_autoread
   endtry
-enddef
-
-def LocationCompare(left: dict<any>, right: dict<any>): number
-  var left_line = get(left, 'line', 0)
-  var right_line = get(right, 'line', 0)
-  if left_line != right_line
-    return right_line - left_line
-  endif
-
-  # Descending column so that applying replacements left of an earlier edit
-  # does not shift the stored columns of later edits on the same line.
-  return get(right, 'column', 0) - get(left, 'column', 0)
 enddef
 
 export def SearchLocations(json: dict<any>, project_root: string): list<any>

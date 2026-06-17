@@ -5,7 +5,7 @@ readseek.vim                                                  *readseek.vim*
 Vim9 plugin frontend for the readseek CLI.
 
 Requirements~
-  readseek 0.3.14 or newer
+  readseek 0.3.15 or newer
   Vim with +job support
 
 Commands~
@@ -36,10 +36,14 @@ Commands~
 
                                                         *:ReadseekRename*
   :ReadseekRename
-        Identify the word at the cursor, prompt for a new name, run readseek
-        refs --format plain for the current project root, and rewrite each
-        matching file location. Modified buffers are refused to avoid losing
-        unsaved changes.
+        Identify the binding at the cursor, prompt for a new name, and run
+        readseek rename --apply on the current file. The rename is binding-
+        accurate and scoped to the current file: every occurrence that resolves
+        to the same declaration is renamed, shadowed occurrences are left
+        untouched. The buffer must be saved (readseek reads and writes the file
+        on disk); unsaved buffers are refused. If readseek reports naming
+        conflicts the rename is not applied. The buffer is reloaded afterwards,
+        preserving cursor and view.
 
                                                          *:ReadseekSearch*
   :ReadseekSearch
@@ -123,7 +127,8 @@ Troubleshooting~
   quickfix output, use |:cnext|, |:cprev|, and |:cclose|. With location-list
   output, use |:lnext|, |:lprev|, and |:lclose|.
 
-  Rename depends on fresh readseek reference locations. If a rename reports a
-  stale location, save or reload changed files and retry.
+  Rename verifies line hashes before writing. If a rename reports that the
+  file changed since the plan was computed, reload the buffer and retry. Save
+  the buffer first: rename operates on the file on disk, not the buffer.
 
 vim:tw=78:ts=8:noet:ft=help:norl:
