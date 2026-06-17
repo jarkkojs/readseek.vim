@@ -5,7 +5,27 @@ vim9script
 
 import autoload 'readseek/config.vim'
 
+# Run readseek and decode its JSON output before invoking Callback.
 export def Run(argv: list<string>, stdin: string, Callback: func)
+  RunRaw(argv, stdin, (result: dict<any>) => {
+    if !result.ok
+      Callback(result)
+      return
+    endif
+
+    try
+      result.json = json_decode(result.stdout)
+    catch
+      result.ok = false
+      result.error = $'failed to decode readseek JSON output: {v:exception}'
+    endtry
+
+    Callback(result)
+  })
+enddef
+
+# Run readseek and hand the raw stdout/stderr to Callback without decoding.
+export def RunRaw(argv: list<string>, stdin: string, Callback: func)
   var stdout: list<string> = []
   var stderr: list<string> = []
 
@@ -29,16 +49,7 @@ export def Run(argv: list<string>, stdin: string, Callback: func)
 
     if status != 0
       result.error = empty(err) ? $'readseek exited with status {status}' : err
-      Callback(result)
-      return
     endif
-
-    try
-      result.json = json_decode(out)
-    catch
-      result.ok = false
-      result.error = $'failed to decode readseek JSON output: {v:exception}'
-    endtry
 
     Callback(result)
   enddef

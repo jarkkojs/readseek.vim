@@ -26,6 +26,7 @@ command! ReadseekReferences readseek#References()
 command! ReadseekRename readseek#Rename()
 command! ReadseekSearch readseek#Search()
 command! ReadseekMap readseek#Map()
+command! ReadseekInit readseek#Init()
 
 def MapPlugDefault(lhs: string, rhs: string)
   if !empty(maparg(lhs, 'n'))
@@ -40,6 +41,7 @@ MapPlugDefault('<Plug>(ReadseekHover)', '<ScriptCmd>ReadseekHover<CR>')
 MapPlugDefault('<Plug>(ReadseekRename)', '<ScriptCmd>ReadseekRename<CR>')
 MapPlugDefault('<Plug>(ReadseekSearch)', '<ScriptCmd>ReadseekSearch<CR>')
 MapPlugDefault('<Plug>(ReadseekMap)', '<ScriptCmd>ReadseekMap<CR>')
+MapPlugDefault('<Plug>(ReadseekInit)', '<ScriptCmd>ReadseekInit<CR>')
 
 highlight default ReadseekOk ctermfg=green guifg=#00d700
 highlight default ReadseekInfo ctermfg=blue guifg=#5f87af
@@ -47,3 +49,4 @@ highlight default ReadseekWarn ctermfg=yellow guifg=#d7d700
 highlight default ReadseekError ctermfg=red guifg=#d70000
 highlight default ReadseekBorder ctermfg=blue guifg=#5f87af
 highlight default ReadseekTitle cterm=bold ctermfg=blue gui=bold guifg=#5f87af
+highlight default link ReadseekFloat Normal

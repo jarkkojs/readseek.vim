@@ -1,10 +1,14 @@
 :ReadseekCheckHealth	readseek.txt	/*:ReadseekCheckHealth*
 :ReadseekDefinition	readseek.txt	/*:ReadseekDefinition*
 :ReadseekHover	readseek.txt	/*:ReadseekHover*
+:ReadseekInit	readseek.txt	/*:ReadseekInit*
+:ReadseekMap	readseek.txt	/*:ReadseekMap*
 :ReadseekReferences	readseek.txt	/*:ReadseekReferences*
 :ReadseekRename	readseek.txt	/*:ReadseekRename*
+:ReadseekSearch	readseek.txt	/*:ReadseekSearch*
 g:readseek_executable	readseek.txt	/*g:readseek_executable*
 g:readseek_list_type	readseek.txt	/*g:readseek_list_type*
 g:readseek_root_markers	readseek.txt	/*g:readseek_root_markers*
+readseek-highlights	readseek.txt	/*readseek-highlights*
 readseek.txt	readseek.txt	/*readseek.txt*
 readseek.vim	readseek.txt	/*readseek.vim*

@@ -10,48 +10,60 @@ import autoload 'readseek/quickfix.vim'
 import autoload 'readseek/root.vim'
 
 export def CheckHealth()
-  var result = config.CheckHealth()
-
-  var lines: list<string> = []
+  config.CheckHealth()
 
   var exec_ok = config.IsExecutableAvailable()
   var exec_path = config.ExecutablePath()
-  if exec_ok
-    add(lines, $'✓ {exec_path}')
-  else
-    add(lines, $'✗ {config.Executable()} (not found)')
-  endif
-
   var version = config.Version()
   var version_ok = config.VersionAtLeast(version, config.MinimumVersion)
-  if version_ok
-    add(lines, $'✓ readseek {version}')
-  else
-    add(lines, $'✗ readseek {empty(version) ? "unknown" : version} (need >= {config.MinimumVersion})')
-  endif
-
   var project_root = root.Find()
-  add(lines, $'  project root: {project_root}')
 
-  if exists('*popup_create')
-    popup_create(lines, {
-      pos: 'center',
-      padding: [1, 2, 1, 2],
-      border: [1, 1, 1, 1],
-      borderchars: ['─', '│', '─', '│', '╭', '╮', '╯', '╰'],
-      borderhighlight: ['ReadseekBorder'],
-      title: ' readseek health ',
-      scrollbar: 0,
-      wrap: false,
-      close: 'click',
-      moved: 'any',
-    })
+  var rows: list<dict<any>> = [
+    StatusRow(exec_ok, 'executable', exec_ok ? exec_path : $'{config.Executable()} (not found)'),
+    StatusRow(version_ok, 'version',
+      version_ok ? $'readseek {version}' : $'{empty(version) ? "unknown" : version} (need >= {config.MinimumVersion})'),
+    {marker: '•', highlight: 'ReadseekInfo', label: 'root', value: project_root},
+  ]
+
+  var plain: list<string> = []
+  for row in rows
+    add(plain, $'{row.marker} {row.label}: {row.value}')
+  endfor
+
+  if !exists('*popup_create')
+    for line in plain
+      echo line
+    endfor
     return
   endif
 
-  for line in lines
-    echo line
+  EnsurePropTypes()
+  var items: list<dict<any>> = []
+  for row in rows
+    var text = $'{row.marker} {row.label}: {row.value}'
+    add(items, {
+      text: text,
+      props: [
+        {col: 1, length: strlen(row.marker), type: PropFor(row.highlight)},
+        {col: strlen(row.marker) + 2, length: strlen(row.label), type: 'ReadseekPropTitle'},
+      ],
+    })
   endfor
+
+  Popup(items, {
+    pos: 'center',
+    title: ' readseek health ',
+    close: 'click',
+  })
+enddef
+
+def StatusRow(ok: bool, label: string, value: string): dict<any>
+  return {
+    marker: ok ? '✓' : '✗',
+    highlight: ok ? 'ReadseekOk' : 'ReadseekError',
+    label: label,
+    value: value,
+  }
 enddef
 
 export def Hover()
@@ -224,6 +236,21 @@ export def Map()
     var count = len(locations)
     Status(count .. ' ' .. Plural(count, 'symbol') .. ' found')
     quickfix.SetLocations(locations, 'readseek map: ' .. tail)
+  })
+enddef
+
+export def Init()
+  var project_root = root.Find()
+  Status($'initializing cache in {project_root}...')
+
+  job.RunRaw(['init', project_root], '', (result: dict<any>) => {
+    if !result.ok
+      Notify(get(result, 'error', 'readseek init failed'), 'error')
+      return
+    endif
+
+    var message = trim(result.stdout)
+    Notify(empty(message) ? $'cache initialized in {project_root}' : message, 'ok')
   })
 enddef
 
@@ -438,29 +465,62 @@ export def HoverLines(identify: dict<any>): list<string>
 enddef
 
 def ShowHover(lines: list<string>)
-  if exists('*popup_create')
-    var title = ' readseek '
-    if !empty(lines)
-      title = $' {lines[0]} '
-    endif
-
-    popup_create(lines, {
-      pos: 'botleft',
-      line: 'cursor+1',
-      col: 'cursor',
-      padding: [0, 1, 0, 1],
-      border: [1, 1, 1, 1],
-      borderchars: ['─', '│', '─', '│', '╭', '╮', '╯', '╰'],
-      borderhighlight: ['ReadseekBorder'],
-      title: title,
-      moved: 'any',
-      scrollbar: 1,
-      wrap: false,
-    })
+  if !exists('*popup_create')
+    echo join(lines, ' | ')
     return
   endif
 
-  echo join(lines, ' | ')
+  var title = empty(lines) ? ' readseek ' : $' {lines[0]} '
+  Popup(lines, {
+    pos: 'botleft',
+    line: 'cursor+1',
+    col: 'cursor',
+    padding: [0, 1, 0, 1],
+    title: title,
+    scrollbar: 1,
+  })
+enddef
+
+# Shared popup styling: rounded border, readseek highlights, dismiss on move.
+def Popup(content: any, overrides: dict<any>)
+  var options: dict<any> = {
+    padding: [1, 2, 1, 2],
+    border: [1, 1, 1, 1],
+    borderchars: ['─', '│', '─', '│', '╭', '╮', '╯', '╰'],
+    borderhighlight: ['ReadseekBorder'],
+    highlight: 'ReadseekFloat',
+    title: ' readseek ',
+    scrollbar: 0,
+    wrap: false,
+    moved: 'any',
+    zindex: 300,
+  }
+  popup_create(content, extend(options, overrides))
+enddef
+
+const PropTypes = {
+  ReadseekOk: 'ReadseekPropOk',
+  ReadseekError: 'ReadseekPropError',
+  ReadseekWarn: 'ReadseekPropWarn',
+  ReadseekInfo: 'ReadseekPropInfo',
+}
+
+def PropFor(highlight: string): string
+  return get(PropTypes, highlight, 'ReadseekPropInfo')
+enddef
+
+def EnsurePropTypes()
+  if !exists('*prop_type_add')
+    return
+  endif
+  for [highlight, prop] in items(PropTypes)
+    if empty(prop_type_get(prop))
+      prop_type_add(prop, {highlight: highlight})
+    endif
+  endfor
+  if empty(prop_type_get('ReadseekPropTitle'))
+    prop_type_add('ReadseekPropTitle', {highlight: 'ReadseekTitle'})
+  endif
 enddef
 
 def Notify(message: string, level: string = 'info')

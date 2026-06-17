@@ -191,6 +191,22 @@ def TestMap()
   Check('Map function exists', exists('*readseek#Map') == 1)
 enddef
 
+def TestInit()
+  Check('Init command exists', exists(':ReadseekInit') == 2)
+  Check('Init function exists', exists('*readseek#Init') == 1)
+  var init_plug = maparg('<Plug>(ReadseekInit)', 'n', false, true)
+  Check('init plug mapping', !empty(init_plug) && init_plug.rhs ==# '<ScriptCmd>ReadseekInit<CR>')
+enddef
+
+def TestVersionAtLeast()
+  Check('equal version satisfies minimum', readseek#config#VersionAtLeast('0.3.14', '0.3.14'))
+  Check('newer patch satisfies minimum', readseek#config#VersionAtLeast('0.3.15', '0.3.14'))
+  Check('newer minor satisfies minimum', readseek#config#VersionAtLeast('0.4.0', '0.3.14'))
+  Check('older patch fails minimum', !readseek#config#VersionAtLeast('0.3.13', '0.3.14'))
+  Check('older minor fails minimum', !readseek#config#VersionAtLeast('0.2.99', '0.3.14'))
+  Check('empty version fails minimum', !readseek#config#VersionAtLeast('', '0.3.14'))
+enddef
+
 def TestSearchLocations()
   var json = {
     results: [{
@@ -227,6 +243,8 @@ TestHealthCache()
 TestReferenceFeedback()
 TestHoverLines()
 TestMap()
+TestInit()
+TestVersionAtLeast()
 TestSearchLocations()
 
 if !empty(failures)

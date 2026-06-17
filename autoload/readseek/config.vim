@@ -3,7 +3,7 @@
 
 vim9script
 
-export const MinimumVersion = '0.3.10'
+export const MinimumVersion = '0.3.14'
 const HealthCacheKey = 'readseek_health'
 
 export def Executable(): string
@@ -24,7 +24,7 @@ export def IsExecutableAvailable(): bool
 enddef
 
 export def Version(): string
-  var output = systemlist([ExecutablePath(), '-V'])
+  var output = systemlist(shellescape(ExecutablePath()) .. ' -V')
   if v:shell_error != 0 || empty(output)
     return ''
   endif
@@ -37,7 +37,16 @@ export def VersionAtLeast(version: string, minimum: string): bool
   if empty(version)
     return false
   endif
-  return VersionParts(version) >= VersionParts(minimum)
+
+  var have = VersionParts(version)
+  var need = VersionParts(minimum)
+  for index in range(len(need))
+    var have_part = index < len(have) ? have[index] : 0
+    if have_part != need[index]
+      return have_part > need[index]
+    endif
+  endfor
+  return true
 enddef
 
 export def IsHealthCached(): bool
@@ -71,5 +80,5 @@ enddef
 
 def VersionParts(version: string): list<number>
   var parts = split(version, '\.')
-  return map(parts, (_, part) => str2nr(part))
+  return mapnew(parts, (_, part) => str2nr(part))
 enddef
