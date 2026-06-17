@@ -15,6 +15,8 @@ readseek init
 or from Vim with `:ReadseekInit`, which initializes the cache for the current
 project root.
 
+NOTE: this is still highly experimental plugin and somewhat unfinished.
+
 ## Installation
 
 ### vim-plug
