@@ -297,6 +297,43 @@ def TestRenameRequiresSavedBuffer()
   delete(base, 'rf')
 enddef
 
+def TestDefinitionUsesFromIdentify()
+  var base = tempname()
+  mkdir(base .. '/project/src', 'p')
+  writefile(['marker'], base .. '/project/.git')
+  writefile(['void target(void) {}'], base .. '/project/src/file.c')
+
+  var executable = base .. '/readseek-fake'
+  writefile([
+    '#!/bin/sh',
+    'if [ "$1" = "identify" ]; then',
+    '  printf ''{"identifier":{"text":"target"}}\n''',
+    'elif [ "$1" = "def" ]; then',
+    '  [ "$2" = "--from-identify" ] && [ "$3" = "--format" ] && [ "$4" = "plain" ] || exit 2',
+    '  printf ''{"locations":[{"file":"src/file.c","line":1,"column":6,"text":"void target(void) {}"}]}\n''',
+    'else',
+    '  printf ''{}\n''',
+    'fi',
+  ], executable)
+  setfperm(executable, 'rwx------')
+
+  var save_executable = g:readseek_executable
+  var save_root_markers = g:readseek_root_markers
+  g:readseek_executable = executable
+  g:readseek_root_markers = ['.git']
+
+  execute 'edit ' .. fnameescape(base .. '/project/src/file.c')
+  cursor(1, 8)
+  readseek#Definition()
+
+  Check('definition start feedback', WaitForMessage('readseek.vim: finding definition...'))
+  Check('definition completion feedback', WaitForMessage('readseek.vim: 1 definition found'))
+  Check('definition jumped to result', expand('%:p') ==# base .. '/project/src/file.c' && line('.') == 1 && col('.') == 6)
+
+  g:readseek_executable = save_executable
+  g:readseek_root_markers = save_root_markers
+  delete(base, 'rf')
+enddef
 def TestHoverLines()
   var lines = readseek#HoverLines({
     identifier: {text: 'target'},
@@ -325,12 +362,13 @@ def TestInit()
 enddef
 
 def TestVersionAtLeast()
-  Check('equal version satisfies minimum', readseek#config#VersionAtLeast('0.3.14', '0.3.14'))
-  Check('newer patch satisfies minimum', readseek#config#VersionAtLeast('0.3.15', '0.3.14'))
-  Check('newer minor satisfies minimum', readseek#config#VersionAtLeast('0.4.0', '0.3.14'))
-  Check('older patch fails minimum', !readseek#config#VersionAtLeast('0.3.13', '0.3.14'))
-  Check('older minor fails minimum', !readseek#config#VersionAtLeast('0.2.99', '0.3.14'))
-  Check('empty version fails minimum', !readseek#config#VersionAtLeast('', '0.3.14'))
+  Check('minimum version is readseek 0.4.3', readseek#config#MinimumVersion ==# '0.4.3')
+  Check('equal version satisfies minimum', readseek#config#VersionAtLeast('0.4.3', '0.4.3'))
+  Check('newer patch satisfies minimum', readseek#config#VersionAtLeast('0.4.3', '0.4.3'))
+  Check('newer minor satisfies minimum', readseek#config#VersionAtLeast('0.5.0', '0.4.3'))
+  Check('older patch fails minimum', !readseek#config#VersionAtLeast('0.4.1', '0.4.3'))
+  Check('older minor fails minimum', !readseek#config#VersionAtLeast('0.3.99', '0.4.3'))
+  Check('empty version fails minimum', !readseek#config#VersionAtLeast('', '0.4.3'))
 enddef
 
 def TestSearchLocations()
@@ -371,6 +409,7 @@ TestRename()
 TestRenameConflict()
 TestRenameUnsupported()
 TestRenameRequiresSavedBuffer()
+TestDefinitionUsesFromIdentify()
 TestHoverLines()
 TestMap()
 TestInit()

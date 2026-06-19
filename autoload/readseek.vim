@@ -92,7 +92,7 @@ export def Definition()
       return
     endif
 
-    job.Run(['def', '--stdin', '--format', 'plain', project_root], identify_result.stdout, (definition_result: dict<any>) => {
+    job.Run(['def', '--from-identify', '--format', 'plain', project_root], identify_result.stdout, (definition_result: dict<any>) => {
       if !definition_result.ok
         Notify(get(definition_result, 'error', 'readseek definition failed'), 'error')
         return

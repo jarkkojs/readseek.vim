@@ -5,7 +5,7 @@ readseek.vim                                                  *readseek.vim*
 Vim9 plugin frontend for the readseek CLI.
 
 Requirements~
-  readseek 0.3.16 or newer
+  readseek 0.4.3 or newer
   Vim with +job support
 
 Commands~
@@ -25,7 +25,7 @@ Commands~
                                                         *:ReadseekDefinition*
   :ReadseekDefinition
         Identify the symbol at the cursor, pipe the identify JSON to readseek
-        def --stdin, and jump to the result. A single result is opened directly;
+        def --from-identify, and jump to the result. A single result is opened directly;
         multiple results are loaded into the configured results list and opened.
 
                                                         *:ReadseekReferences*
