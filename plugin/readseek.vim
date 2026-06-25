@@ -15,14 +15,14 @@ if !exists('g:readseek_list_type')
   g:readseek_list_type = 'quickfix'
 endif
 
-command! ReadseekCheckHealth readseek#CheckHealth()
-command! ReadseekHover readseek#Hover()
-command! ReadseekDefinition readseek#Definition()
-command! ReadseekReferences readseek#References()
-command! ReadseekRename readseek#Rename()
-command! ReadseekSearch readseek#Search()
-command! ReadseekMap readseek#Map()
-command! ReadseekInit readseek#Init()
+command! ReadSeekCheckHealth readseek#CheckHealth()
+command! ReadSeekHover readseek#Hover()
+command! ReadSeekDefinition readseek#Definition()
+command! ReadSeekReferences readseek#References()
+command! ReadSeekRename readseek#Rename()
+command! ReadSeekSearch readseek#Search()
+command! ReadSeekMap readseek#Map()
+command! ReadSeekInit readseek#Init()
 
 def MapPlugDefault(lhs: string, rhs: string)
   if !empty(maparg(lhs, 'n'))
@@ -31,21 +31,21 @@ def MapPlugDefault(lhs: string, rhs: string)
   execute $'nnoremap <silent> {lhs} {rhs}'
 enddef
 
-MapPlugDefault('<Plug>(ReadseekDefinition)', '<ScriptCmd>ReadseekDefinition<CR>')
-MapPlugDefault('<Plug>(ReadseekReferences)', '<ScriptCmd>ReadseekReferences<CR>')
-MapPlugDefault('<Plug>(ReadseekHover)', '<ScriptCmd>ReadseekHover<CR>')
-MapPlugDefault('<Plug>(ReadseekRename)', '<ScriptCmd>ReadseekRename<CR>')
-MapPlugDefault('<Plug>(ReadseekSearch)', '<ScriptCmd>ReadseekSearch<CR>')
-MapPlugDefault('<Plug>(ReadseekMap)', '<ScriptCmd>ReadseekMap<CR>')
-MapPlugDefault('<Plug>(ReadseekInit)', '<ScriptCmd>ReadseekInit<CR>')
+MapPlugDefault('<Plug>(ReadSeekDefinition)', '<ScriptCmd>ReadSeekDefinition<CR>')
+MapPlugDefault('<Plug>(ReadSeekReferences)', '<ScriptCmd>ReadSeekReferences<CR>')
+MapPlugDefault('<Plug>(ReadSeekHover)', '<ScriptCmd>ReadSeekHover<CR>')
+MapPlugDefault('<Plug>(ReadSeekRename)', '<ScriptCmd>ReadSeekRename<CR>')
+MapPlugDefault('<Plug>(ReadSeekSearch)', '<ScriptCmd>ReadSeekSearch<CR>')
+MapPlugDefault('<Plug>(ReadSeekMap)', '<ScriptCmd>ReadSeekMap<CR>')
+MapPlugDefault('<Plug>(ReadSeekInit)', '<ScriptCmd>ReadSeekInit<CR>')
 
-highlight default ReadseekOk ctermfg=green guifg=#00d700
-highlight default ReadseekInfo ctermfg=blue guifg=#5f87af
-highlight default ReadseekWarn ctermfg=yellow guifg=#d7d700
-highlight default ReadseekError ctermfg=red guifg=#d70000
-highlight default ReadseekBorder ctermfg=blue guifg=#5f87af
-highlight default ReadseekTitle cterm=bold ctermfg=blue gui=bold guifg=#5f87af
-highlight default link ReadseekFloat Normal
+highlight default ReadSeekOk ctermfg=green guifg=#00d700
+highlight default ReadSeekInfo ctermfg=blue guifg=#5f87af
+highlight default ReadSeekWarn ctermfg=yellow guifg=#d7d700
+highlight default ReadSeekError ctermfg=red guifg=#d70000
+highlight default ReadSeekBorder ctermfg=blue guifg=#5f87af
+highlight default ReadSeekTitle cterm=bold ctermfg=blue gui=bold guifg=#5f87af
+highlight default link ReadSeekFloat Normal
 
 import autoload 'readseek/config.vim'
 import autoload 'readseek/install.vim'

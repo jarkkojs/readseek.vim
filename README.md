@@ -12,7 +12,7 @@ Before using the plugin, initialize the readseek map cache, either from a shell:
 readseek init
 ```
 
-or from Vim with `:ReadseekInit`, which initializes the cache for the current
+or from Vim with `:ReadSeekInit`, which initializes the cache for the current
 project root.
 
 NOTE: this is still highly experimental plugin and somewhat unfinished.
@@ -33,7 +33,7 @@ git clone https://github.com/jarkkojs/readseek.vim \
 vim -u NONE -c 'helptags ~/.vim/pack/plugins/start/readseek.vim/doc' -c q
 ```
 
-Run `:ReadseekCheckHealth` in Vim to verify the executable and version.
+Run `:ReadSeekCheckHealth` in Vim to verify the executable and version.
 
 ## Configuration
 
@@ -52,35 +52,35 @@ Available `<Plug>` mappings:
 
 | Mapping                      | Command                |
 |------------------------------|------------------------|
-| `<Plug>(ReadseekDefinition)` | `:ReadseekDefinition`  |
-| `<Plug>(ReadseekReferences)` | `:ReadseekReferences`  |
-| `<Plug>(ReadseekRename)`     | `:ReadseekRename`      |
-| `<Plug>(ReadseekHover)`      | `:ReadseekHover`       |
-| `<Plug>(ReadseekSearch)`     | `:ReadseekSearch`      |
-| `<Plug>(ReadseekMap)`        | `:ReadseekMap`         |
-| `<Plug>(ReadseekInit)`       | `:ReadseekInit`        |
+| `<Plug>(ReadSeekDefinition)` | `:ReadSeekDefinition`  |
+| `<Plug>(ReadSeekReferences)` | `:ReadSeekReferences`  |
+| `<Plug>(ReadSeekRename)`     | `:ReadSeekRename`      |
+| `<Plug>(ReadSeekHover)`      | `:ReadSeekHover`       |
+| `<Plug>(ReadSeekSearch)`     | `:ReadSeekSearch`      |
+| `<Plug>(ReadSeekMap)`        | `:ReadSeekMap`         |
+| `<Plug>(ReadSeekInit)`       | `:ReadSeekInit`        |
 
 Define your preferred keys in vimrc:
 
 ```vim
-nnoremap <silent> gd <Plug>(ReadseekDefinition)
-nnoremap <silent> gr <Plug>(ReadseekReferences)
-nnoremap <silent> K <Plug>(ReadseekHover)
-nnoremap <silent> ,rn <Plug>(ReadseekRename)
-nnoremap <silent> ,rs <Plug>(ReadseekSearch)
-nnoremap <silent> ,rm <Plug>(ReadseekMap)
+nnoremap <silent> gd <Plug>(ReadSeekDefinition)
+nnoremap <silent> gr <Plug>(ReadSeekReferences)
+nnoremap <silent> K <Plug>(ReadSeekHover)
+nnoremap <silent> ,rn <Plug>(ReadSeekRename)
+nnoremap <silent> ,rs <Plug>(ReadSeekSearch)
+nnoremap <silent> ,rm <Plug>(ReadSeekMap)
 ```
 
 ## Commands
 
-- `:ReadseekCheckHealth` checks executable discovery and `readseek` version.
-- `:ReadseekHover` shows identifier context at the cursor.
-- `:ReadseekDefinition` jumps to one definition or opens quickfix for multiple.
-- `:ReadseekReferences` opens quickfix with references for the cursor identifier.
-- `:ReadseekRename` prompts for a new name and applies a binding-accurate rename
+- `:ReadSeekCheckHealth` checks executable discovery and `readseek` version.
+- `:ReadSeekHover` shows identifier context at the cursor.
+- `:ReadSeekDefinition` jumps to one definition or opens quickfix for multiple.
+- `:ReadSeekReferences` opens quickfix with references for the cursor identifier.
+- `:ReadSeekRename` prompts for a new name and applies a binding-accurate rename
   to the current (saved) file via `readseek rename --apply`.
-- `:ReadseekMap` maps the current buffer to a symbol outline in the results list.
-- `:ReadseekInit` initializes the `readseek` cache for the current project root.
+- `:ReadSeekMap` maps the current buffer to a symbol outline in the results list.
+- `:ReadSeekInit` initializes the `readseek` cache for the current project root.
 
 ## Tests
 

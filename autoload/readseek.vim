@@ -19,8 +19,8 @@ export def CheckHealth()
 
   var rows: list<dict<any>> = [
     StatusRow(exec_ok, 'executable', exec_ok ? exec_path : $'{exec_path} (not installed)'),
-    {marker: '•', highlight: 'ReadseekInfo', label: 'version', value: empty(version) ? 'unknown' : $'readseek {version}'},
-    {marker: '•', highlight: 'ReadseekInfo', label: 'root', value: project_root},
+    {marker: '•', highlight: 'ReadSeekInfo', label: 'version', value: empty(version) ? 'unknown' : $'readseek {version}'},
+    {marker: '•', highlight: 'ReadSeekInfo', label: 'root', value: project_root},
   ]
 
   var plain: list<string> = []
@@ -43,7 +43,7 @@ export def CheckHealth()
       text: text,
       props: [
         {col: 1, length: strlen(row.marker), type: PropFor(row.highlight)},
-        {col: strlen(row.marker) + 2, length: strlen(row.label), type: 'ReadseekPropTitle'},
+        {col: strlen(row.marker) + 2, length: strlen(row.label), type: 'ReadSeekPropTitle'},
       ],
     })
   endfor
@@ -58,7 +58,7 @@ enddef
 def StatusRow(ok: bool, label: string, value: string): dict<any>
   return {
     marker: ok ? '✓' : '✗',
-    highlight: ok ? 'ReadseekOk' : 'ReadseekError',
+    highlight: ok ? 'ReadSeekOk' : 'ReadSeekError',
     label: label,
     value: value,
   }
@@ -423,8 +423,8 @@ def Popup(content: any, overrides: dict<any>)
     padding: [1, 2, 1, 2],
     border: [1, 1, 1, 1],
     borderchars: ['─', '│', '─', '│', '╭', '╮', '╯', '╰'],
-    borderhighlight: ['ReadseekBorder'],
-    highlight: 'ReadseekFloat',
+    borderhighlight: ['ReadSeekBorder'],
+    highlight: 'ReadSeekFloat',
     title: ' readseek ',
     scrollbar: 0,
     wrap: false,
@@ -435,14 +435,14 @@ def Popup(content: any, overrides: dict<any>)
 enddef
 
 const PropTypes = {
-  ReadseekOk: 'ReadseekPropOk',
-  ReadseekError: 'ReadseekPropError',
-  ReadseekWarn: 'ReadseekPropWarn',
-  ReadseekInfo: 'ReadseekPropInfo',
+  ReadSeekOk: 'ReadSeekPropOk',
+  ReadSeekError: 'ReadSeekPropError',
+  ReadSeekWarn: 'ReadSeekPropWarn',
+  ReadSeekInfo: 'ReadSeekPropInfo',
 }
 
 def PropFor(highlight: string): string
-  return get(PropTypes, highlight, 'ReadseekPropInfo')
+  return get(PropTypes, highlight, 'ReadSeekPropInfo')
 enddef
 
 def EnsurePropTypes()
@@ -454,8 +454,8 @@ def EnsurePropTypes()
       prop_type_add(prop, {highlight: highlight})
     endif
   endfor
-  if empty(prop_type_get('ReadseekPropTitle'))
-    prop_type_add('ReadseekPropTitle', {highlight: 'ReadseekTitle'})
+  if empty(prop_type_get('ReadSeekPropTitle'))
+    prop_type_add('ReadSeekPropTitle', {highlight: 'ReadSeekTitle'})
   endif
 enddef
 
@@ -471,13 +471,13 @@ def Notify(message: string, level: string = 'info')
     return
   endif
 
-  var highlight = 'ReadseekInfo'
+  var highlight = 'ReadSeekInfo'
   if level == 'error'
-    highlight = 'ReadseekError'
+    highlight = 'ReadSeekError'
   elseif level == 'warn'
-    highlight = 'ReadseekWarn'
+    highlight = 'ReadSeekWarn'
   elseif level == 'ok'
-    highlight = 'ReadseekOk'
+    highlight = 'ReadSeekOk'
   endif
 
   popup_notification($' readseek.vim: {message} ', {

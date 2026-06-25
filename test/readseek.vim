@@ -2,7 +2,7 @@
 " Copyright (c) 2026 Jarkko Sakkinen
 
 vim9script
-nnoremap <Plug>(ReadseekHover) :echo 'keep'<CR>
+nnoremap <Plug>(ReadSeekHover) :echo 'keep'<CR>
 
 set nomore
 set rtp^=.
@@ -65,18 +65,18 @@ def TestResultLists()
 enddef
 
 def TestMappings()
-  var gd = maparg('<Plug>(ReadseekDefinition)', 'n', false, true)
-  var gr = maparg('<Plug>(ReadseekReferences)', 'n', false, true)
-  var hover = maparg('<Plug>(ReadseekHover)', 'n', false, true)
-  var rn = maparg('<Plug>(ReadseekRename)', 'n', false, true)
-  var search = maparg('<Plug>(ReadseekSearch)', 'n', false, true)
-  var map_sym = maparg('<Plug>(ReadseekMap)', 'n', false, true)
-  Check('definition plug mapping', !empty(gd) && gd.rhs ==# '<ScriptCmd>ReadseekDefinition<CR>')
-  Check('references plug mapping', !empty(gr) && gr.rhs ==# '<ScriptCmd>ReadseekReferences<CR>')
+  var gd = maparg('<Plug>(ReadSeekDefinition)', 'n', false, true)
+  var gr = maparg('<Plug>(ReadSeekReferences)', 'n', false, true)
+  var hover = maparg('<Plug>(ReadSeekHover)', 'n', false, true)
+  var rn = maparg('<Plug>(ReadSeekRename)', 'n', false, true)
+  var search = maparg('<Plug>(ReadSeekSearch)', 'n', false, true)
+  var map_sym = maparg('<Plug>(ReadSeekMap)', 'n', false, true)
+  Check('definition plug mapping', !empty(gd) && gd.rhs ==# '<ScriptCmd>ReadSeekDefinition<CR>')
+  Check('references plug mapping', !empty(gr) && gr.rhs ==# '<ScriptCmd>ReadSeekReferences<CR>')
   Check('hover plug mapping preserved', !empty(hover) && hover.rhs ==# ":echo 'keep'<CR>")
-  Check('rename plug mapping', !empty(rn) && rn.rhs ==# '<ScriptCmd>ReadseekRename<CR>')
-  Check('search plug mapping', !empty(search) && search.rhs ==# '<ScriptCmd>ReadseekSearch<CR>')
-  Check('map plug mapping', !empty(map_sym) && map_sym.rhs ==# '<ScriptCmd>ReadseekMap<CR>')
+  Check('rename plug mapping', !empty(rn) && rn.rhs ==# '<ScriptCmd>ReadSeekRename<CR>')
+  Check('search plug mapping', !empty(search) && search.rhs ==# '<ScriptCmd>ReadSeekSearch<CR>')
+  Check('map plug mapping', !empty(map_sym) && map_sym.rhs ==# '<ScriptCmd>ReadSeekMap<CR>')
 enddef
 
 def TestIdentifyArgs()
@@ -350,15 +350,15 @@ def TestHoverLines()
 enddef
 
 def TestMap()
-  Check('Map command exists', exists(':ReadseekMap') == 2)
+  Check('Map command exists', exists(':ReadSeekMap') == 2)
   Check('Map function exists', exists('*readseek#Map') == 1)
 enddef
 
 def TestInit()
-  Check('Init command exists', exists(':ReadseekInit') == 2)
+  Check('Init command exists', exists(':ReadSeekInit') == 2)
   Check('Init function exists', exists('*readseek#Init') == 1)
-  var init_plug = maparg('<Plug>(ReadseekInit)', 'n', false, true)
-  Check('init plug mapping', !empty(init_plug) && init_plug.rhs ==# '<ScriptCmd>ReadseekInit<CR>')
+  var init_plug = maparg('<Plug>(ReadSeekInit)', 'n', false, true)
+  Check('init plug mapping', !empty(init_plug) && init_plug.rhs ==# '<ScriptCmd>ReadSeekInit<CR>')
 enddef
 
 def TestVersionAtLeast()
