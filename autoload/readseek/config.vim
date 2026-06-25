@@ -3,7 +3,7 @@
 
 vim9script
 
-export const MinimumVersion = '0.4.3'
+export const MinimumVersion = '0.4.13'
 const HealthCacheKey = 'readseek_health'
 
 export def LocalBinaryPath(): string
