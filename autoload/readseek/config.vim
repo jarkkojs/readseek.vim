@@ -6,21 +6,27 @@ vim9script
 export const MinimumVersion = '0.4.3'
 const HealthCacheKey = 'readseek_health'
 
-export def Executable(): string
-  return get(g:, 'readseek_executable', 'readseek')
+export def LocalBinaryPath(): string
+  if has('win32')
+    return expand('$APPDATA') .. '\readseek.vim\bin\readseek.exe'
+  endif
+  return expand('~/.local/share/readseek.vim/bin/readseek')
+enddef
+
+export def LocalBinaryDir(): string
+  return fnamemodify(LocalBinaryPath(), ':h')
 enddef
 
 export def ExecutablePath(): string
-  var executable_name = Executable()
-  var executable_path = exepath(executable_name)
-  if empty(executable_path)
-    return executable_name
-  endif
-  return executable_path
+  return LocalBinaryPath()
 enddef
 
 export def IsExecutableAvailable(): bool
-  return executable(Executable()) == 1
+  return filereadable(LocalBinaryPath())
+enddef
+
+export def InvalidateHealthCache()
+  unlet! g:[HealthCacheKey]
 enddef
 
 export def Version(): string
@@ -31,22 +37,6 @@ export def Version(): string
 
   var match = matchstr(output[0], '\v\d+\.\d+\.\d+')
   return match
-enddef
-
-export def VersionAtLeast(version: string, minimum: string): bool
-  if empty(version)
-    return false
-  endif
-
-  var have = VersionParts(version)
-  var need = VersionParts(minimum)
-  for index in range(len(need))
-    var have_part = index < len(have) ? have[index] : 0
-    if have_part != need[index]
-      return have_part > need[index]
-    endif
-  endfor
-  return true
 enddef
 
 export def IsHealthCached(): bool
@@ -64,21 +54,11 @@ export def CheckHealth(): dict<any>
   endif
 
   if !IsExecutableAvailable()
-    return {ok: false, message: $'readseek.vim: executable not found: {Executable()}'}
+    return {ok: false, message: 'readseek.vim: binary not installed'}
   endif
 
   var version = Version()
-  if !VersionAtLeast(version, MinimumVersion)
-    var found = empty(version) ? 'unknown' : version
-    return {ok: false, message: $'readseek.vim: readseek {MinimumVersion} or newer required, found {found}'}
-  endif
-
   var path = ExecutablePath()
   CacheHealth(version)
   return {ok: true, message: $'readseek.vim: readseek {version} found at {path}'}
-enddef
-
-def VersionParts(version: string): list<number>
-  var parts = split(version, '\.')
-  return mapnew(parts, (_, part) => str2nr(part))
 enddef

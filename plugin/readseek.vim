@@ -8,10 +8,6 @@ if exists('g:loaded_readseek')
 endif
 g:loaded_readseek = true
 
-if !exists('g:readseek_executable')
-  g:readseek_executable = 'readseek'
-endif
-
 if !exists('g:readseek_root_markers')
   g:readseek_root_markers = ['.git']
 endif
@@ -50,3 +46,10 @@ highlight default ReadseekError ctermfg=red guifg=#d70000
 highlight default ReadseekBorder ctermfg=blue guifg=#5f87af
 highlight default ReadseekTitle cterm=bold ctermfg=blue gui=bold guifg=#5f87af
 highlight default link ReadseekFloat Normal
+
+import autoload 'readseek/config.vim'
+import autoload 'readseek/install.vim'
+
+if !config.IsExecutableAvailable()
+  install.Install((result: dict<any>) => {})
+endif

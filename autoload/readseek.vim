@@ -14,14 +14,12 @@ export def CheckHealth()
 
   var exec_ok = config.IsExecutableAvailable()
   var exec_path = config.ExecutablePath()
-  var version = config.Version()
-  var version_ok = config.VersionAtLeast(version, config.MinimumVersion)
+  var version = exec_ok ? config.Version() : ''
   var project_root = root.Find()
 
   var rows: list<dict<any>> = [
-    StatusRow(exec_ok, 'executable', exec_ok ? exec_path : $'{config.Executable()} (not found)'),
-    StatusRow(version_ok, 'version',
-      version_ok ? $'readseek {version}' : $'{empty(version) ? "unknown" : version} (need >= {config.MinimumVersion})'),
+    StatusRow(exec_ok, 'executable', exec_ok ? exec_path : $'{exec_path} (not installed)'),
+    {marker: '•', highlight: 'ReadseekInfo', label: 'version', value: empty(version) ? 'unknown' : $'readseek {version}'},
     {marker: '•', highlight: 'ReadseekInfo', label: 'root', value: project_root},
   ]
 
