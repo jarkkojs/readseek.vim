@@ -50,6 +50,9 @@ highlight default link ReadSeekFloat Normal
 import autoload 'readseek/config.vim'
 import autoload 'readseek/install.vim'
 
+def OnAutoInstall(result: dict<any>)
+enddef
+
 if !config.IsExecutableAvailable()
-  install.Install((result: dict<any>) => {})
+  install.Install(OnAutoInstall)
 endif
