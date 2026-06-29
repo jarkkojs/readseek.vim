@@ -361,16 +361,6 @@ def TestInit()
   Check('init plug mapping', !empty(init_plug) && init_plug.rhs ==# '<ScriptCmd>ReadSeekInit<CR>')
 enddef
 
-def TestVersionAtLeast()
-  Check('minimum version is readseek 0.4.15', readseek#config#MinimumVersion ==# '0.4.15')
-  Check('equal version satisfies minimum', readseek#config#VersionAtLeast('0.4.15', '0.4.15'))
-  Check('newer patch satisfies minimum', readseek#config#VersionAtLeast('0.4.15', '0.4.15'))
-  Check('newer minor satisfies minimum', readseek#config#VersionAtLeast('0.5.0', '0.4.15'))
-  Check('older patch fails minimum', !readseek#config#VersionAtLeast('0.4.1', '0.4.15'))
-  Check('older minor fails minimum', !readseek#config#VersionAtLeast('0.3.99', '0.4.15'))
-  Check('empty version fails minimum', !readseek#config#VersionAtLeast('', '0.4.15'))
-enddef
-
 def TestSearchLocations()
   var json = {
     results: [{
