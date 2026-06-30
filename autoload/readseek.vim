@@ -166,17 +166,22 @@ export def Rename()
       return
     endif
 
-    RenameTo(file, line, column, old_name, new_name)
+    var project_root = root.Find()
+    RenameTo(file, line, column, old_name, new_name, project_root)
   })
 enddef
 
 # Apply a binding-accurate rename to file via readseek rename --apply.
-export def RenameTo(file: string, line: number, column: number, old_name: string, new_name: string)
+export def RenameTo(file: string, line: number, column: number, old_name: string, new_name: string, workspace: string = '')
   Status($'renaming {old_name} to {new_name}...')
-  job.Run(['rename', file,
+  var argv = ['rename', file,
     '--line', string(line),
     '--column', string(column),
-    '--to', new_name, '--apply'], '', (rename_result: dict<any>) => {
+    '--to', new_name, '--apply']
+  if !empty(workspace)
+    extend(argv, ['--workspace', workspace])
+  endif
+  job.Run(argv, '', (rename_result: dict<any>) => {
     if !rename_result.ok
       Notify(get(rename_result, 'error', 'readseek rename failed'), 'error')
       return
