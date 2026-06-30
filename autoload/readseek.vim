@@ -189,7 +189,15 @@ export def RenameTo(file: string, line: number, column: number, old_name: string
     endif
 
     var edits = get(rename_result.json, 'edits', [])
-    ReloadChangedBuffers({[file]: true})
+    var changed = {[file]: true}
+    var dir = fnamemodify(file, ':h')
+    for entry in get(rename_result.json, 'others', [])
+      var path = get(entry, 'file', '')
+      if !empty(path)
+        changed[fnamemodify(path =~# '^/' ? path : dir .. '/' .. path, ':p')] = true
+      endif
+    endfor
+    ReloadChangedBuffers(changed)
     Notify($'renamed {old_name} to {new_name} in {len(edits)} {Plural(len(edits), "location")}', 'ok')
   })
 enddef
