@@ -18,6 +18,10 @@ export def LocalBinaryDir(): string
 enddef
 
 export def ExecutablePath(): string
+  var executable = get(g:, 'readseek_executable', '')
+  if !empty(executable)
+    return executable
+  endif
   return LocalBinaryPath()
 enddef
 

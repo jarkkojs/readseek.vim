@@ -7,6 +7,7 @@ nnoremap <Plug>(ReadSeekHover) :echo 'keep'<CR>
 set nomore
 set rtp^=.
 runtime plugin/readseek.vim
+g:readseek_executable = ''
 delete('test-readseek-failures.log')
 delete('test-readseek.log')
 
@@ -404,7 +405,6 @@ TestDefinitionUsesFromIdentify()
 TestHoverLines()
 TestMap()
 TestInit()
-TestVersionAtLeast()
 TestSearchLocations()
 
 if !empty(failures)

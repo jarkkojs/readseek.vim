@@ -38,8 +38,6 @@ Run `:ReadSeekCheckHealth` in Vim to verify the executable and version.
 ## Configuration
 
 ```vim
-" Executable name or absolute path.
-let g:readseek_executable = 'readseek'
 
 " Root marker search order. The nearest directory containing one is used.
 let g:readseek_root_markers = ['.git']

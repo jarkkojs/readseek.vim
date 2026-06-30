@@ -65,9 +65,6 @@ Commands~
         cache.
 
 Options~
-                                                        *g:readseek_executable*
-  g:readseek_executable
-        readseek executable path. Default: 'readseek'
 
 Plug mappings are provided for users to bind to preferred keys:
           <Plug>(ReadSeekDefinition)    :ReadSeekDefinition
@@ -102,7 +99,6 @@ Highlight groups~
 
 Examples~
 >
-  let g:readseek_executable = '/usr/local/bin/readseek'
   let g:readseek_root_markers = ['.git', 'package.json']
   let g:readseek_list_type = 'location'
 
