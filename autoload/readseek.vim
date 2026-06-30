@@ -182,12 +182,6 @@ export def RenameTo(file: string, line: number, column: number, old_name: string
       return
     endif
 
-    if get(rename_result.json, 'unsupported', false)
-      var language = get(rename_result.json, 'language', 'this language')
-      StatusWarn($'rename not supported for {language}')
-      return
-    endif
-
     var conflicts = get(rename_result.json, 'conflicts', [])
     if !empty(conflicts)
       Notify($'rename has {len(conflicts)} {Plural(len(conflicts), "conflict")}; not applied', 'warn')

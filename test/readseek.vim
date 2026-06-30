@@ -251,12 +251,13 @@ def TestRenameUnsupported()
   var file = base .. '/file.vim'
   writefile(['var target = 0'], file)
 
-  # An unsupported language is a no-op: readseek reports unsupported and leaves
-  # the file untouched. The plugin must not treat this as a failure.
+  # When readseek cannot rename (e.g. unsupported language), it exits non-zero
+  # with a message on stderr. The plugin must leave the buffer unchanged.
   var executable = base .. '/readseek-fake'
   writefile([
     '#!/bin/sh',
-    'printf ''{"language":"vimscript","unsupported":true,"applied":false,"conflicts":[],"edits":[]}\n''',
+    'printf ''error: rename not supported for vimscript\n'' >&2',
+    'exit 1',
   ], executable)
   setfperm(executable, 'rwx------')
 
